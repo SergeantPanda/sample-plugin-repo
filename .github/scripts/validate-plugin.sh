@@ -109,23 +109,34 @@ validate_plugin() {
   echo "- ✅ JSON valid"
   
   # Validate required fields
-  local required_keys=("name" "version" "owner" "maintainers" "description")
+  local required_keys=("name" "version" "description")
   for key in "${required_keys[@]}"; do
     if ! jq -e ".\"$key\"" "$plugin_json" >/dev/null 2>&1; then
-      echo "- ❌ Required property '$key' missing"
+      echo "- ❌ Required property \`$key\` missing"
       failed=1
     fi
   done
   
   # Extract metadata
-  OWNER=$(jq -r '.owner' "$plugin_json")
+  OWNER=$(jq -r '.owner // ""' "$plugin_json")
   MAINTAINERS=$(jq -r '[.maintainers[]?] | join(" ")' "$plugin_json")
   VERSION=$(jq -r '.version' "$plugin_json")
+  
+  # Require at least one of owner or maintainers to be present
+  if [[ -z "$OWNER" ]] && [[ -z "$MAINTAINERS" ]]; then
+    echo "- ❌ At least one of \`owner\` or \`maintainers\` must be set"
+    echo "  **Action required:** Add your GitHub username to \`owner\`, \`maintainers\`, or both."
+    echo "  Example: \`\"owner\": \"your-github-username\"\`"
+    echo "  Example: \`\"maintainers\": [\"your-github-username\"]\`"
+    echo "  > Note: These fields are not part of the Dispatcharr plugin spec, but are required"
+    echo "  > by this repository to manage contribution permissions."
+    failed=1
+  fi
   
   # Check ownership
   IS_REPO_MAINTAINER=$(check_repo_maintainer "$PR_AUTHOR")
   if [[ "$PR_AUTHOR" != "$OWNER" ]] && [[ ! " $MAINTAINERS " =~ " $PR_AUTHOR " ]] && [[ "$IS_REPO_MAINTAINER" -ne 1 ]]; then
-    echo "- ❌ **Permission denied**: You are not the owner (\`$OWNER\`), a plugin maintainer, or a repository maintainer"
+    echo "- ❌ **Permission denied**: Your GitHub username (\`$PR_AUTHOR\`) must appear in \`owner\` or \`maintainers\`"
     failed=1
   else
     echo "- ✅ Permission check passed"

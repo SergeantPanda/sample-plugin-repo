@@ -1,17 +1,17 @@
-# Plugin Repository
- 
-A centralized repository for publishing and distributing plugins with automated validation, versioning, and release management.
+# Dispatcharr Plugin Repository
 
-## 🔗 Quick Links
+A centralized repository for publishing and distributing Dispatcharr Python plugins with automated validation, versioning, and release management.
+
+## Quick Links
 
 | Resource | Description |
 |----------|-------------|
-| 📦 [**Browse Plugins**](https://github.com/sethwv/sample-plugin-repo/tree/releases) | View all available plugins on the releases branch |
-| 📋 [**Plugin Manifest**](https://raw.githubusercontent.com/sethwv/sample-plugin-repo/releases/manifest.json) | JSON file with complete plugin metadata, checksums, and URLs |
-| 📥 [**Download Releases**](https://github.com/sethwv/sample-plugin-repo/tree/releases/releases) | Direct access to all plugin ZIP files |
-| 🔍 [**View Metadata**](https://github.com/sethwv/sample-plugin-repo/tree/releases/metadata) | Version metadata with commit info and checksums |
+| [**Browse Plugins**](https://github.com/sethwv/sample-plugin-repo/tree/releases) | View all available plugins on the releases branch |
+| [**Plugin Manifest**](https://raw.githubusercontent.com/sethwv/sample-plugin-repo/releases/manifest.json) | JSON file with complete plugin metadata, checksums, and URLs |
+| [**Download Releases**](https://github.com/sethwv/sample-plugin-repo/tree/releases/releases) | Direct access to all plugin ZIP files |
+| [**View Metadata**](https://github.com/sethwv/sample-plugin-repo/tree/releases/metadata) | Version metadata with commit info and checksums |
 
-## 📦 How It Works
+## How It Works
 
 ### Repository Structure
 
@@ -20,7 +20,7 @@ plugins/
 ├── plugin-name-1/
 │   ├── plugin.json      # Plugin metadata and configuration
 │   ├── README.md        # Plugin documentation
-│   └── main.js          # Plugin source code
+│   └── plugin.py        # Plugin entry point
 └── plugin-name-2/
     ├── plugin.json
     ├── README.md
@@ -64,7 +64,7 @@ Once your PR is merged to `main`:
   - Download links with checksums
   - Source code and commit history links
 
-## 🚀 Contributing a Plugin
+## Contributing a Plugin
 
 ### Adding a New Plugin
 
@@ -73,7 +73,7 @@ Once your PR is merged to `main`:
 3. **Add required files**:
    - `plugin.json` - Plugin metadata
    - `README.md` - Plugin documentation
-   - Source files (e.g., `main.js`)
+   - Source files (e.g., `plugin.py`)
 4. **Submit a pull request** to `main`
 
 ### Updating an Existing Plugin
@@ -83,53 +83,52 @@ Once your PR is merged to `main`:
 3. **Increment the version** in `plugin.json` (e.g., `1.0.0` → `1.0.1`)
 4. **Submit a pull request** to `main`
 
-### `plugin.json` Format
+### `plugin.json` Required Fields
+
+Your `plugin.json` must include the following fields to pass validation:
 
 ```json
 {
-  "name": "My Awesome Plugin",
+  "name": "My Plugin",
   "version": "1.0.0",
-  "owner": "github-username",
-  "maintainers": ["contributor1", "contributor2"],
   "description": "A brief description of what the plugin does",
-  "deprecated": false,
-  "unlisted": false
+  "owner": "github-username"
 }
 ```
 
-**Required fields:**
 - `name`: Display name of the plugin
 - `version`: Semantic version (e.g., `1.0.0`)
-- `owner`: GitHub username of the plugin owner
-- `maintainers`: Array of GitHub usernames who can modify the plugin
 - `description`: Brief explanation of plugin functionality
+- `owner` / `maintainers`: At least one must be present and include your GitHub username. These are not part of the Dispatcharr spec but are required by this repository to manage contribution permissions.
 
-**Optional fields:**
-- `deprecated`: Boolean (default: false) - Marks plugin as deprecated, moves to bottom of README with warnings
-- `unlisted`: Boolean (default: false) - Hides plugin from README while keeping it in manifest and releases
+**Optional repository fields:**
+- `maintainers`: Array of additional GitHub usernames who can submit PRs for this plugin
+- `deprecated`: Boolean (default: `false`) - Marks plugin as deprecated
+- `unlisted`: Boolean (default: `false`) - Hides plugin from the releases README while keeping it in the manifest and releases
 
 **Important:** Plugin folder names must use lowercase-kebab-case (e.g., `my-awesome-plugin`, not `My_Awesome_Plugin`).
 
 ### PR Requirements & Validation
 
-✅ **Your PR must**:
+**Your PR must**:
 - Use lowercase-kebab-case for plugin folder names (e.g., `my-plugin`, not `My_Plugin`)
 - Be submitted by the plugin owner, a listed maintainer, or a repository maintainer (for each modified plugin)
 - Include valid `plugin.json` and `README.md` files for each plugin
+  - Include your GitHub username in `owner`, `maintainers`, or both — at least one must be present in `plugin.json`
 - Use semantic versioning (`MAJOR.MINOR.PATCH`)
 - Increment the version for updates to existing plugins
 - Have proper permissions for all modified plugins
 
-❌ **Your PR will fail if**:
+**Your PR will fail if**:
 - Plugin folder name contains uppercase letters, underscores, or spaces
 - Required files are missing
-- `plugin.json` is invalid or missing required fields
+  - `plugin.json` is invalid, missing required fields, or missing your GitHub username from both `owner` and `maintainers`
 - Version is not incremented (for existing plugins)
 - Submitter lacks permission for any modified plugin
 
 **Note:** You can modify multiple plugins in a single PR as long as you have proper permissions for all of them.
 
-## 📥 Downloading Plugins
+## Downloading Plugins
 
 ### For End Users
 
@@ -168,7 +167,7 @@ curl -L "$URL" -o plugin.zip
 echo "$CHECKSUM  plugin.zip" | shasum -a 256 -c
 ```
 
-## 🔒 Ownership & Permissions
+## Ownership & Permissions
 
 - **Plugin Owner**: The GitHub user specified in `plugin.json` `owner` field
 - **Maintainers**: Additional GitHub users listed in `plugin.json` `maintainers` array
@@ -176,7 +175,7 @@ echo "$CHECKSUM  plugin.zip" | shasum -a 256 -c
 
 Only these users can submit PRs that modify a given plugin.
 
-## 🏷️ Versioning
+## Versioning
 
 This repository uses **semantic versioning** for plugins:
 

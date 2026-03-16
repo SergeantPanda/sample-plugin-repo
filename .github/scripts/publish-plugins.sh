@@ -499,8 +499,8 @@ echo "📄 Generating README.md..."
     echo ""
     
     # Downloads and checksums
-    echo "**📥 Downloads:**"
-    echo "- [Latest Release (\`$version\`)](\`releases/${plugin_name}/${plugin_name}-latest.zip\`]($zip_url))"
+    echo "**Downloads:**"
+    echo "- [Latest Release (\`$version\`)]($zip_url)"
     echo "- [All Versions ($version_count available)]($releases_dir)"
     echo ""
     # echo "**🔒 Checksums:**"
