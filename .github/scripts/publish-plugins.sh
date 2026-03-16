@@ -173,7 +173,7 @@ for plugin_dir in plugins/*/; do
           checksum_md5=$(jq -r '.checksum_md5' "$metadata_file")
           checksum_sha256=$(jq -r '.checksum_sha256' "$metadata_file")
           
-          echo "- **Download:** [\`${plugin_name}-latest.zip\`](${plugin_name}-latest.zip)"
+          echo "- **Download:** [\`${plugin_name}-latest.zip\`](https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${plugin_name}-latest.zip)"
           echo "- **Built:** $build_timestamp"
           echo "- **Source Commit:** [\`$commit_sha_short\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha})"
           echo ""
@@ -183,7 +183,7 @@ for plugin_dir in plugins/*/; do
           echo "SHA256: $checksum_sha256"
           echo "\`\`\`"
         else
-          echo "- **Download:** [\`${plugin_name}-latest.zip\`](${plugin_name}-latest.zip)"
+          echo "- **Download:** [\`${plugin_name}-latest.zip\`](https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${plugin_name}-latest.zip)"
         fi
       fi
     fi
@@ -209,9 +209,9 @@ for plugin_dir in plugins/*/; do
         # Format timestamp to date only
         build_date=$(echo "$build_timestamp" | cut -d'T' -f1)
         
-        echo "| \`$version\` | [Download]($zip_basename) | $build_date | [\`$commit_sha_short\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha}) | \`$checksum_md5\` |"
+        echo "| \`$version\` | [Download](https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${zip_basename}) | $build_date | [\`$commit_sha_short\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha}) | \`$checksum_md5\` |"
       else
-        echo "| \`$version\` | [Download]($zip_basename) | - | - | - |"
+        echo "| \`$version\` | [Download](https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${zip_basename}) | - | - | - |"
       fi
     done
     
@@ -350,7 +350,7 @@ for plugin_dir in plugins/*/; do
       --arg latest_url "$latest_url" \
       --argjson versioned_zips "$versioned_zips" \
       --argjson latest_metadata "$latest_metadata" \
-      '. + {
+      'with_entries(select(.key | IN("name","version","description","owner","maintainers","deprecated","unlisted"))) + {
         latest_url: $latest_url, 
         versions: $versioned_zips
       } + (
