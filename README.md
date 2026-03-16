@@ -12,8 +12,24 @@ This branch contains all published plugin releases.
 
 | Plugin | Version | Owner | Description |
 |--------|---------|-------|-------------|
+| [`Dispatcharr Exporter`](#dispatcharr-exporter) | `2.4.0` | sethwv | Expose Dispatcharr metrics in Prometheus exporter-compatible format for monitoring |
 | [`old-proof-of-concept`](#old-proof-of-concept) | `0.1.0` | sethwv | A cool description |
 | [`Weatharr Station`](#weatharr-station) | `2.0.0` | OkinawaBoss | Start a local WeatherStream broadcast and publish it as a channel. |
+
+---
+
+### Dispatcharr Exporter
+
+**Version:** `2.4.0` | **Owner:** sethwv | **Last Updated:** 2026-03-16T18:57:47-04:00
+
+Expose Dispatcharr metrics in Prometheus exporter-compatible format for monitoring
+
+**Downloads:**
+- [Latest Release (`2.4.0`)](https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/dispatcharr-exporter/dispatcharr-exporter-latest.zip)
+- [All Versions (1 available)](./releases/dispatcharr-exporter)
+
+
+**Maintainers:** sethwv-alt | **Source:** [Browse](https://github.com/sethwv/sample-plugin-repo/tree/main/plugins/dispatcharr-exporter) | **Last Change:** [`594de34`](https://github.com/sethwv/sample-plugin-repo/commit/594de3454ecc7d6859800991e895a4f84e979ffb)
 
 ---
 
@@ -57,4 +73,4 @@ curl https://raw.githubusercontent.com/sethwv/sample-plugin-repo/releases/manife
 
 ---
 
-*Last updated: 2026-03-16 22:55:21 UTC*
+*Last updated: 2026-03-16 22:58:04 UTC*
