@@ -93,10 +93,9 @@ validate_plugin() {
   fi
   echo "- ✅ plugin.json exists"
   
-  # Check for README.md
+  # Check for README.md (optional)
   if [[ ! -f "$readme" ]]; then
-    echo "- ❌ README.md missing"
-    failed=1
+    echo "- ℹ️ README.md not provided (optional)"
   else
     echo "- ✅ README.md exists"
   fi
@@ -172,13 +171,13 @@ validate_plugin() {
     echo "❌ **Validation failed for \`$plugin_name\`**"
   fi
   
-  # Export table data for later rendering
-  local keys=($(jq -r 'keys_unsorted[]' "$plugin_json"))
+  # Export table data for later rendering (only repo-relevant fields)
+  local display_keys=("name" "version" "description" "owner" "maintainers")
   PLUGIN_TABLE_HEADER="|"
   PLUGIN_TABLE_ROW="|"
-  for key in "${keys[@]}"; do
+  for key in "${display_keys[@]}"; do
     PLUGIN_TABLE_HEADER+=" $key |"
-    value=$(jq -r ".\"$key\" | if type==\"array\" and (map(type) | all(. == \"string\")) then join(\", \") elif type==\"array\" or type==\"object\" then @json else . end" "$plugin_json")
+    value=$(jq -r ".\"$key\" // \"\" | if type==\"array\" then join(\", \") else . end" "$plugin_json")
     PLUGIN_TABLE_ROW+=" $value |"
   done
   

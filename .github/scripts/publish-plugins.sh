@@ -132,11 +132,17 @@ for plugin_dir in plugins/*/; do
   name=$(jq -r '.name' "$plugin_file")
   description=$(jq -r '.description' "$plugin_file")
   owner=$(jq -r '.owner' "$plugin_file")
+  has_readme=false
+  [[ -f "$plugin_dir/README.md" ]] && has_readme=true
   
   {
     echo "← [Back to All Plugins](../../)"
     echo ""
-    echo "# [$name](https://github.com/${GITHUB_REPOSITORY}/blob/$SOURCE_BRANCH/plugins/${plugin_name}/README.md)"
+    if [[ "$has_readme" == "true" ]]; then
+      echo "# [$name](https://github.com/${GITHUB_REPOSITORY}/blob/$SOURCE_BRANCH/plugins/${plugin_name}/README.md)"
+    else
+      echo "# $name"
+    fi
     echo ""
     echo "$description"
     echo ""
@@ -480,15 +486,23 @@ echo "📄 Generating README.md..."
     local readme_url="https://github.com/${GITHUB_REPOSITORY}/blob/$SOURCE_BRANCH/plugins/${plugin_name}/README.md"
     local commit_url="https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha}"
     local releases_dir="./releases/${plugin_name}"
+    local has_source_readme=false
+    [[ -f "plugins/$plugin_name/README.md" ]] && has_source_readme=true
     
     # Header
     if [[ "$is_deprecated" == "true" ]]; then
-      echo "### ⚠️ [$name]($readme_url)"
+      if [[ "$has_source_readme" == "true" ]]; then
+        echo "### ⚠️ [$name]($readme_url)"
+      else
+        echo "### ⚠️ $name"
+      fi
       echo ""
-      # echo "> **Warning:** This plugin is deprecated and may be removed in the future. It may not work in current or future versions of the application."
-      # echo ""
     else
-      echo "### [$name]($readme_url)"
+      if [[ "$has_source_readme" == "true" ]]; then
+        echo "### [$name]($readme_url)"
+      else
+        echo "### $name"
+      fi
       echo ""
     fi
     
@@ -515,7 +529,11 @@ echo "📄 Generating README.md..."
     if [[ -n "$maintainers" ]]; then
       footer="**👥 Maintainers:** $maintainers | "
     fi
-    footer+="**📂 Source:** [Browse](${source_url}) | **📝 Last Change:** [\`$commit_sha_short\`]($commit_url)"
+    footer+="**Source:** [Browse](${source_url})"
+    if [[ "$has_source_readme" == "true" ]]; then
+      footer+=" | [README]($readme_url)"
+    fi
+    footer+=" | **Last Change:** [\`$commit_sha_short\`]($commit_url)"
     echo "$footer"
     echo ""
     echo "---"

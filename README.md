@@ -72,7 +72,7 @@ Once your PR is merged to `main`:
 2. **Create your plugin folder** under `plugins/your-plugin-name/`
 3. **Add required files**:
    - `plugin.json` - Plugin metadata
-   - `README.md` - Plugin documentation
+   - `README.md` - Plugin documentation *(optional)*
    - Source files (e.g., `plugin.py`)
 4. **Submit a pull request** to `main`
 
@@ -113,7 +113,7 @@ Your `plugin.json` must include the following fields to pass validation:
 **Your PR must**:
 - Use lowercase-kebab-case for plugin folder names (e.g., `my-plugin`, not `My_Plugin`)
 - Be submitted by the plugin owner, a listed maintainer, or a repository maintainer (for each modified plugin)
-- Include valid `plugin.json` and `README.md` files for each plugin
+- Include valid `plugin.json` for each plugin (`README.md` is optional)
   - Include your GitHub username in `owner`, `maintainers`, or both — at least one must be present in `plugin.json`
 - Use semantic versioning (`MAJOR.MINOR.PATCH`)
 - Increment the version for updates to existing plugins
