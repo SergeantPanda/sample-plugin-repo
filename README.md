@@ -58,13 +58,15 @@ For updates, increment the version in `plugin.json`.
   "name": "My Plugin",
   "version": "1.0.0",
   "description": "A brief description of what the plugin does",
-  "owner": "github-username"
+  "owner": "github-username",
+  "license": "MIT"
 }
 ```
 
-- `name`, `version`, `description` are required
+- `name`, `version`, `description`, `license` are required
 - At least one of `owner` or `maintainers` must include your GitHub username - these are not part of the Dispatcharr spec but are required by this repository to manage who can submit PRs for each plugin
 - Plugin folder names must be lowercase-kebab-case
+- `license` must be a valid [OSI-approved SPDX identifier](https://spdx.org/licenses/) (e.g. `MIT`, `Apache-2.0`, `GPL-3.0-only`)
 
 **Optional fields:**
 - `maintainers` - Array of additional GitHub usernames who can submit PRs for this plugin
@@ -74,13 +76,10 @@ For updates, increment the version in `plugin.json`.
 - `discord_thread` - URL or ID of the associated Discord thread
 - `deprecated` - Marks plugin as deprecated (default: `false`)
 - `unlisted` - Hides plugin from the releases README (default: `false`)
-- `license` - [OSI-approved SPDX license identifier](https://spdx.org/licenses/) for your plugin (e.g. `MIT`, `Apache-2.0`, `GPL-3.0-only`). If omitted, the plugin is distributed under the repository's [AGPL-3.0](https://spdx.org/licenses/AGPL-3.0-only.html) license by default.
 
 ## Licensing
 
-Plugins submitted to this repository must be distributed under an [OSI-approved open source license](https://opensource.org/licenses). Specify your license using the `license` field in `plugin.json` with a valid [SPDX identifier](https://spdx.org/licenses/) (e.g. `"license": "MIT"`).
-
-If no `license` field is provided, your plugin will be distributed under the same [AGPL-3.0](https://spdx.org/licenses/AGPL-3.0-only.html) license as this repository. By submitting a plugin without a `license` field, you agree to these terms.
+Plugins must be distributed under an [OSI-approved open source license](https://opensource.org/licenses). The `license` field in `plugin.json` is required and must be a valid [SPDX identifier](https://spdx.org/licenses/) (e.g. `"license": "MIT"`).
 
 ## Versioning
 

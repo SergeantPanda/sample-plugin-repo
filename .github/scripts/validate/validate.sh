@@ -229,9 +229,12 @@ has_permission="false"
     fi
   fi
 
-  # License (optional): omit, or a valid OSI-approved SPDX identifier
+  # License (required): must be a valid OSI-approved SPDX identifier
   LICENSE_ID=$(jq -r '.license // ""' "$PLUGIN_JSON")
-  if [[ -n "$LICENSE_ID" ]]; then
+  if [[ -z "$LICENSE_ID" ]]; then
+    echo "- ❌ \`license\` is required - provide an OSI-approved SPDX identifier (e.g. \`MIT\`, \`Apache-2.0\`). See https://spdx.org/licenses/ (filter: OSI Approved)"
+    failed=1
+  else
     SPDX_JSON=$(curl -fsSL "https://raw.githubusercontent.com/spdx/license-list-data/main/json/licenses.json" 2>/dev/null || echo "")
     if [[ -z "$SPDX_JSON" ]]; then
       echo "- ⚠️ Could not fetch SPDX license list - skipping license ID validation"
@@ -244,8 +247,6 @@ has_permission="false"
         failed=1
       fi
     fi
-  else
-    echo "- ⚠️ No \`license\` field provided - by submitting this plugin without a license, you agree to distribute it under the repository's [AGPL-3.0](https://spdx.org/licenses/AGPL-3.0-only.html) license. Add a \`license\` field to specify a different OSI-approved license."
   fi
 
   # Version bump check

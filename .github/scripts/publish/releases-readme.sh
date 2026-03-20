@@ -97,7 +97,7 @@ render_plugin() {
       version=$(jq -r '.version' "$plugin_file")
       owner=$(jq -r '.owner' "$plugin_file")
       description=$(jq -r '.description' "$plugin_file")
-      table_license=$(jq -r '.license // "AGPL-3.0"' "$plugin_file")
+      table_license=$(jq -r '.license // "-"' "$plugin_file")
       anchor=$(echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g')
       suffix=""
       [[ "$pass" == "deprecated" ]] && suffix=" (deprecated)"
@@ -132,7 +132,7 @@ render_plugin() {
     commit_sha_short=$(git log -1 --format=%h origin/$SOURCE_BRANCH -- "$plugin_dir" 2>/dev/null || echo "unknown")
     version_count=$(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null \
       | grep -v latest | wc -l | tr -d ' ')
-    plugin_license=$(jq -r '.license // "AGPL-3.0"' "$plugin_file")
+    plugin_license=$(jq -r '.license // ""' "$plugin_file")
 
     render_plugin "false" "$plugin_name" "$name" "$version" "$owner" "$description" \
       "$maintainers" "$last_updated" "$commit_sha" "$commit_sha_short" "$version_count" "$plugin_license"
@@ -176,7 +176,7 @@ render_plugin() {
       commit_sha_short=$(git log -1 --format=%h origin/$SOURCE_BRANCH -- "$plugin_dir" 2>/dev/null || echo "unknown")
       version_count=$(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null \
         | grep -v latest | wc -l | tr -d ' ')
-      plugin_license=$(jq -r '.license // "AGPL-3.0"' "$plugin_file")
+      plugin_license=$(jq -r '.license // ""' "$plugin_file")
 
       render_plugin "true" "$plugin_name" "$name" "$version" "$owner" "$description" \
         "$maintainers" "$last_updated" "$commit_sha" "$commit_sha_short" "$version_count" "$plugin_license"
