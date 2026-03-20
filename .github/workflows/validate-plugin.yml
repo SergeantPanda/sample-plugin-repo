@@ -55,6 +55,7 @@ jobs:
       close_pr: ${{ steps.detect.outputs.close_pr }}
       close_reason: ${{ steps.detect.outputs.close_reason }}
       outside_files: ${{ steps.detect.outputs.outside_files }}
+      skip_validation: ${{ steps.detect.outputs.skip_validation }}
     steps:
       - name: Checkout base branch scripts (trusted)
         uses: actions/checkout@v4
@@ -317,7 +318,7 @@ jobs:
   # --------------------------------------------------------------------------
   validate-plugin:
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.close_pr == 'false'
+    if: needs.detect-changes.outputs.close_pr == 'false' && needs.detect-changes.outputs.skip_validation != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -388,7 +389,7 @@ jobs:
   # --------------------------------------------------------------------------
   report:
     needs: [detect-changes, validate-plugin, codeql-analyze]
-    if: always() && needs.detect-changes.result == 'success' && needs.detect-changes.outputs.close_pr == 'false'
+    if: always() && needs.detect-changes.result == 'success' && needs.detect-changes.outputs.close_pr == 'false' && needs.detect-changes.outputs.skip_validation != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -495,6 +496,7 @@ jobs:
         env:
           DETECT_RESULT: ${{ needs.detect-changes.result }}
           CLOSE_PR: ${{ needs.detect-changes.outputs.close_pr }}
+          SKIP_VALIDATION: ${{ needs.detect-changes.outputs.skip_validation }}
           CODEQL_RESULT: ${{ needs.codeql-analyze.result }}
           CODEQL_STATUS: ${{ needs.codeql-analyze.outputs.codeql_status }}
           VALIDATE_RESULT: ${{ needs.validate-plugin.result }}
@@ -503,6 +505,10 @@ jobs:
           if [[ "$DETECT_RESULT" != "success" ]]; then
             echo "::error::Plugin detection failed or no plugin changes found."
             exit 1
+          fi
+          if [[ "$SKIP_VALIDATION" == "true" ]]; then
+            echo "No plugin changes detected and author has write access - passing."
+            exit 0
           fi
           if [[ "$CLOSE_PR" == "true" ]]; then
             echo "::error::PR is unauthorized - no permission to modify these plugins."
