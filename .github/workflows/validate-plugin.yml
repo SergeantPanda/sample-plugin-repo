@@ -30,10 +30,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
-          COMMENT="<\!--PLUGIN_VALIDATION_DRAFT_NOTICE-->"
-          COMMENT+=$'\n'"This PR is currently a draft. Plugin validation will run once the PR is marked ready for review."
+          MARKER="<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->"
+          COMMENT="$MARKER"$'\n'"This PR is currently a draft. Plugin validation will run once the PR is marked ready for review."
           EXISTING=$(gh pr view $PR_NUMBER --json comments \
-            --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<\!--PLUGIN_VALIDATION_DRAFT_NOTICE-->")) | .id')
+            --jq --arg marker "$MARKER" '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains($marker)) | .id')
           if [ -n "$EXISTING" ]; then
             gh api "repos/${{ github.repository }}/issues/comments/$EXISTING" -X PATCH -f body="$COMMENT"
           else
