@@ -231,7 +231,9 @@ has_permission="false"
     .version // "",
     .description // "",
     .owner // "",
-    ([ .maintainers[]? ] | join(", "))
+    ([ .maintainers[]? ] | join(", ")),
+    (.repo_url // ""),
+    (.discord_thread // "")
   ] | @tsv' "$PLUGIN_JSON")-->"
 
 } > "$OUTPUT_FILE"

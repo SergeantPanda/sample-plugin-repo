@@ -36,6 +36,7 @@ COMBINED_BODY=""
 TABLE_HEADER="| name | version | description | owner | maintainers |"
 TABLE_SEP="|---|---|---|---|---|"
 TABLE_ROWS=""
+PLUGIN_LINKS=""
 
 for fragment in "$FRAGMENTS_DIR"/*.fragment.md; do
   [[ -f "$fragment" ]] || continue
@@ -48,8 +49,14 @@ for fragment in "$FRAGMENTS_DIR"/*.fragment.md; do
   # Extract metadata table row from hidden comment marker
   META_ROW=$(grep '<!--META_ROW:' "$fragment" | sed 's/<!--META_ROW://;s/-->//' || true)
   if [[ -n "$META_ROW" ]]; then
-    IFS=$'\t' read -r f_name f_version f_description f_owner f_maintainers <<< "$META_ROW"
+    IFS=$'\t' read -r f_name f_version f_description f_owner f_maintainers f_repo_url f_discord_thread <<< "$META_ROW"
     TABLE_ROWS+="| $f_name | $f_version | $f_description | $f_owner | $f_maintainers |"$'\n'
+    if [[ -n "$f_repo_url" || -n "$f_discord_thread" ]]; then
+      PLUGIN_LINKS+="**\`${f_name}\`:**"$'\n'
+      [[ -n "$f_repo_url" ]] && PLUGIN_LINKS+="- [GitHub Repository](${f_repo_url})"$'\n'
+      [[ -n "$f_discord_thread" ]] && PLUGIN_LINKS+="- [Discord Thread](${f_discord_thread})"$'\n'
+      PLUGIN_LINKS+=$'\n'
+    fi
   fi
 
   # Strip internal marker lines from visible output
@@ -72,11 +79,18 @@ done
     echo "## PR Closed: Unauthorized"
     echo ""
     echo "Your GitHub username (\`$PR_AUTHOR\`) does not appear in \`owner\` or \`maintainers\` for any of the plugin(s) in this PR. This PR has been automatically closed."
+    echo "If you would like to contribute to this plugin, please consider reaching out to the maintainers of this plugin on Discord, or the plugin's Github repository."
     echo ""
     echo "If you are submitting a new plugin, add your GitHub username to the \`owner\` field in your \`plugin.json\`."
+    if [[ -n "$PLUGIN_LINKS" ]]; then
+      echo ""
+      echo "### Plugin Contact Links"
+      echo ""
+      echo "$PLUGIN_LINKS"
+    fi
     if [[ -n "${DISCORD_URL:-}" ]]; then
       echo ""
-      echo "For help or to discuss plugins:"
+      echo "For general help or plugin discussion:"
       echo "- [Dispatcharr Discord]($DISCORD_URL)"
     fi
   else
