@@ -162,16 +162,16 @@ done
       echo "Some checks failed. Please review the errors above and update your PR."
     fi
 
-    if [[ -n "$TABLE_ROWS" ]]; then
-      echo ""
-      echo "---"
-      echo ""
-      echo "## Plugin Metadata"
-      echo ""
-      echo "$TABLE_HEADER"
-      echo "$TABLE_SEP"
-      echo "$TABLE_ROWS"
-    fi
+    # if [[ -n "$TABLE_ROWS" ]]; then
+    #   echo ""
+    #   echo "---"
+    #   echo ""
+    #   echo "## Plugin Metadata"
+    #   echo ""
+    #   echo "$TABLE_HEADER"
+    #   echo "$TABLE_SEP"
+    #   echo "$TABLE_ROWS"
+    # fi
   fi
 } > pr_comment.txt
 
