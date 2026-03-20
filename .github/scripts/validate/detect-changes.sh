@@ -53,12 +53,13 @@ PLUGIN_LIST=$(git diff --name-only "$MERGE_BASE" HEAD \
 
 if [[ -z "$PLUGIN_LIST" ]]; then
   if [[ $HAS_OUTSIDE_VIOLATION -eq 1 ]]; then
-    # Unauthorized outside-plugins changes with no plugin changes - surface the error via report job
-    echo "matrix=[]"      >> "$GITHUB_OUTPUT"
-    echo "plugin_count=0" >> "$GITHUB_OUTPUT"
-    echo "close_pr=false" >> "$GITHUB_OUTPUT"
-    echo "close_reason=" >> "$GITHUB_OUTPUT"
-    echo "skip_validation=false" >> "$GITHUB_OUTPUT"
+    # Unauthorized outside-plugins changes with no plugin changes
+    echo "matrix=[]"              >> "$GITHUB_OUTPUT"
+    echo "plugin_count=0"         >> "$GITHUB_OUTPUT"
+    echo "close_pr=false"         >> "$GITHUB_OUTPUT"
+    echo "close_reason="          >> "$GITHUB_OUTPUT"
+    echo "skip_validation=false"  >> "$GITHUB_OUTPUT"
+    echo "outside_violation=true" >> "$GITHUB_OUTPUT"
     {
       echo "outside_files<<OUTSIDE_EOF"
       echo "$OUTSIDE_CHANGES"
@@ -68,11 +69,12 @@ if [[ -z "$PLUGIN_LIST" ]]; then
   fi
   if [[ "$(has_write_access "$PR_AUTHOR")" -eq 1 ]]; then
     # Repo maintainer with no plugin changes - skip plugin validation entirely and pass
-    echo "matrix=[]"             >> "$GITHUB_OUTPUT"
-    echo "plugin_count=0"        >> "$GITHUB_OUTPUT"
-    echo "close_pr=false"        >> "$GITHUB_OUTPUT"
-    echo "close_reason="         >> "$GITHUB_OUTPUT"
-    echo "skip_validation=true"  >> "$GITHUB_OUTPUT"
+    echo "matrix=[]"               >> "$GITHUB_OUTPUT"
+    echo "plugin_count=0"          >> "$GITHUB_OUTPUT"
+    echo "close_pr=false"          >> "$GITHUB_OUTPUT"
+    echo "close_reason="           >> "$GITHUB_OUTPUT"
+    echo "skip_validation=true"    >> "$GITHUB_OUTPUT"
+    echo "outside_violation=false" >> "$GITHUB_OUTPUT"
     echo "No plugin changes detected — skipping plugin validation (author has write access)."
     exit 0
   fi
@@ -149,6 +151,11 @@ echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
 echo "plugin_count=$PLUGIN_COUNT" >> "$GITHUB_OUTPUT"
 echo "close_pr=$CLOSE_PR" >> "$GITHUB_OUTPUT"
 echo "skip_validation=false" >> "$GITHUB_OUTPUT"
+if [[ $HAS_OUTSIDE_VIOLATION -eq 1 ]]; then
+  echo "outside_violation=true" >> "$GITHUB_OUTPUT"
+else
+  echo "outside_violation=false" >> "$GITHUB_OUTPUT"
+fi
 if [[ "$CLOSE_PR" == "true" ]]; then
   echo "close_reason=unauthorized" >> "$GITHUB_OUTPUT"
 else

@@ -55,6 +55,7 @@ jobs:
       close_pr: ${{ steps.detect.outputs.close_pr }}
       close_reason: ${{ steps.detect.outputs.close_reason }}
       outside_files: ${{ steps.detect.outputs.outside_files }}
+      outside_violation: ${{ steps.detect.outputs.outside_violation }}
       skip_validation: ${{ steps.detect.outputs.skip_validation }}
     steps:
       - name: Checkout base branch scripts (trusted)
@@ -507,6 +508,7 @@ jobs:
           DETECT_RESULT: ${{ needs.detect-changes.result }}
           CLOSE_PR: ${{ needs.detect-changes.outputs.close_pr }}
           SKIP_VALIDATION: ${{ needs.detect-changes.outputs.skip_validation }}
+          OUTSIDE_VIOLATION: ${{ needs.detect-changes.outputs.outside_violation }}
           CODEQL_RESULT: ${{ needs.codeql-analyze.result }}
           CODEQL_STATUS: ${{ needs.codeql-analyze.outputs.codeql_status }}
           VALIDATE_RESULT: ${{ needs.validate-plugin.result }}
@@ -519,6 +521,10 @@ jobs:
           if [[ "$SKIP_VALIDATION" == "true" ]]; then
             echo "No plugin changes detected and author has write access - passing."
             exit 0
+          fi
+          if [[ "$OUTSIDE_VIOLATION" == "true" ]]; then
+            echo "::error::PR contains unauthorized changes outside the plugins/ directory."
+            exit 1
           fi
           if [[ "$CLOSE_PR" == "true" ]]; then
             echo "::error::PR is unauthorized - no permission to modify these plugins."
