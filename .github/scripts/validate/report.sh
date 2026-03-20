@@ -135,7 +135,6 @@ done
       ERROR_LABEL="${CODEQL_ERRORS:-unknown}"
       echo "❌ **CodeQL found $ERROR_LABEL high or critical issue(s)**"
       if [[ -n "${CODEQL_WARNINGS:-}" && "${CODEQL_WARNINGS:-}" -gt 0 ]]; then
-        echo ""
         echo "and ${CODEQL_WARNINGS} lower-severity issue(s)"
       fi
       echo "see [security findings](${CODEQL_SCAN_URL}) for details."
