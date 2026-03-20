@@ -140,14 +140,16 @@ has_permission="false"
   MAINTAINERS=$(jq -r '[.maintainers[]?] | join(" ")' "$PLUGIN_JSON")
   VERSION=$(jq -r '.version' "$PLUGIN_JSON")
 
-  # Author / maintainers
+  # Maintainers
   if [[ -z "$AUTHOR" ]] && [[ -z "$MAINTAINERS" ]]; then
-    TABLE_ROWS+=("| Author / maintainers | ❌ | At least one of \`author\` or \`maintainers\` must include your GitHub username |")
+    TABLE_ROWS+=("| Maintainers | ❌ | At least one of \`author\` or \`maintainers\` must include your GitHub username |")
     failed=1
-  elif [[ -n "$AUTHOR" ]]; then
-    TABLE_ROWS+=("| Author / maintainers | ✅ | \`$AUTHOR\` |")
   else
-    TABLE_ROWS+=("| Author / maintainers | ✅ | |")
+    DISPLAY_PARTS=()
+    [[ -n "$AUTHOR" ]] && DISPLAY_PARTS+=("\`$AUTHOR\`")
+    for m in $MAINTAINERS; do DISPLAY_PARTS+=("\`$m\`"); done
+    DISPLAY=$(IFS=", "; echo "${DISPLAY_PARTS[*]}")
+    TABLE_ROWS+=("| Maintainers | ✅ | $DISPLAY |")
   fi
 
   # License (required)

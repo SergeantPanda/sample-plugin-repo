@@ -99,10 +99,12 @@ jobs:
             "${{ github.event.pull_request.base.ref }}"
 
   # --------------------------------------------------------------------------
-  # Job 3: CodeQL security and quality analysis (runs in parallel with detect-changes)
+  # Job 3: CodeQL security and quality analysis (runs after validate-plugin)
+  #   Skipped automatically if any validation shard fails, saving ~15 min.
   # --------------------------------------------------------------------------
   codeql-analyze:
-    if: github.event.pull_request.draft == false
+    needs: [validate-plugin]
+    if: needs.validate-plugin.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
