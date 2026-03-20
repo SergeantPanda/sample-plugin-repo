@@ -180,11 +180,45 @@ jobs:
           echo "Found $RESULT_COUNT high/error/critical and $WARN_COUNT lower-severity CodeQL result(s)"
           echo "codeql_errors=$RESULT_COUNT" >> "$GITHUB_OUTPUT"
           echo "codeql_warnings=$WARN_COUNT" >> "$GITHUB_OUTPUT"
+
+          # Generate a findings detail file for inclusion in the PR comment
+          if [[ "$RESULT_COUNT" -gt 0 ]]; then
+            MERGE_SHA=$(git rev-parse HEAD)
+            {
+              echo "| Rule | Location | Description |"
+              echo "|------|----------|-------------|"
+              for f in sarif-results/*.sarif sarif-results/*.sarif.gz; do
+                [[ -f "$f" ]] || continue
+                if [[ "$f" == *.gz ]]; then
+                  FC=$(gunzip -c "$f")
+                else
+                  FC=$(cat "$f")
+                fi
+                echo "$FC" | jq -r \
+                  --arg repo "$GITHUB_REPOSITORY" \
+                  --arg sha "$MERGE_SHA" \
+                  '.runs[] | (.results // [])[] | select(.level == "error") |
+                  (.locations[0].physicalLocation.artifactLocation.uri // "?") as $uri |
+                  ((.locations[0].physicalLocation.region.startLine // "?") | tostring) as $line |
+                  (.ruleId // .rule.id // "unknown") as $rule |
+                  (.message.text // "no description" | gsub("\n"; " ") | if length > 150 then .[0:150] + "\u2026" else . end) as $msg |
+                  "| `\($rule)` | [\($uri):\($line)](https://github.com/\($repo)/blob/\($sha)/\($uri)#L\($line)) | \($msg) |"'
+              done
+            } > codeql-findings.md
+          fi
           if [[ "$RESULT_COUNT" -gt 0 || "${{ steps.analyze.outcome }}" != "success" ]]; then
             echo "codeql_status=failure" >> "$GITHUB_OUTPUT"
           else
             echo "codeql_status=success" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Upload findings detail for PR comment
+        if: always() && steps.status.outputs.codeql_status == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-findings
+          path: codeql-findings.md
+          if-no-files-found: ignore
 
       - name: Fail job if CodeQL found high/error/critical issues
         if: always() && steps.status.outputs.codeql_status == 'failure'
@@ -282,6 +316,13 @@ jobs:
           pattern: fragment-*
           path: fragments
           merge-multiple: true
+        continue-on-error: true
+
+      - name: Download CodeQL findings detail
+        uses: actions/download-artifact@v4
+        with:
+          name: codeql-findings
+          path: codeql-findings
         continue-on-error: true
 
       - name: Aggregate and post comment
