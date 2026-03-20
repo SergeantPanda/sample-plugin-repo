@@ -20,7 +20,7 @@ for plugin_dir in plugins/*/; do
 
   name=$(jq -r '.name' "$plugin_file")
   description=$(jq -r '.description' "$plugin_file")
-  owner=$(jq -r '.owner' "$plugin_file")
+  author=$(jq -r '.author // ""' "$plugin_file")
   repo_url=$(jq -r '.repo_url // empty' "$plugin_file")
   discord_thread=$(jq -r '.discord_thread // empty' "$plugin_file")
   license=$(jq -r '.license // ""' "$plugin_file")
@@ -34,7 +34,7 @@ for plugin_dir in plugins/*/; do
     echo ""
     echo "$description"
     echo ""
-    echo "**Owner:** $owner"
+    echo "**Author:** $author"
     echo ""
     if [[ -n "$repo_url" ]]; then
       echo "**Repository:** [$repo_url]($repo_url)"

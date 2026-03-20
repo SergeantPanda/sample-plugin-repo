@@ -1,7 +1,7 @@
 {
   "name": "old-proof-of-concept",
   "version": "0.1.0",
-  "owner": "sethwv",
+  "author": "sethwv",
   "maintainers": ["sethwv-alt-zzz"],
   "description": "A cool description"
 }

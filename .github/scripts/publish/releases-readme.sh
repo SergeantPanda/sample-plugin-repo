@@ -18,7 +18,7 @@ render_plugin() {
   local plugin_name=$2
   local name=$3
   local version=$4
-  local owner=$5
+  local author=$5
   local description=$6
   local maintainers=$7
   local last_updated=$8
@@ -41,7 +41,7 @@ render_plugin() {
 
   echo "### [$name]($releases_readme_url)$suffix"
   echo ""
-  echo "**Version:** \`$version\` | **Owner:** $owner | **Last Updated:** $(fmt_date "$last_updated")"
+  echo "**Version:** \`$version\` | **Author:** $author | **Last Updated:** $(fmt_date "$last_updated")"
   echo ""
   echo "$description"
   echo ""
@@ -78,7 +78,7 @@ render_plugin() {
   echo ""
   echo "## Available Plugins"
   echo ""
-  echo "| Plugin | Version | Owner | License | Description |"
+  echo "| Plugin | Version | Author | License | Description |"
   echo "|--------|---------|-------|---------|-------------|"
 
   # Table rows: active plugins first, then deprecated
@@ -95,7 +95,7 @@ render_plugin() {
       plugin_name=$(basename "$plugin_dir")
       name=$(jq -r '.name' "$plugin_file")
       version=$(jq -r '.version' "$plugin_file")
-      owner=$(jq -r '.owner' "$plugin_file")
+      author=$(jq -r '.author // ""' "$plugin_file")
       description=$(jq -r '.description' "$plugin_file")
       table_license=$(jq -r '.license // "-"' "$plugin_file")
       anchor=$(echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g')
@@ -103,7 +103,7 @@ render_plugin() {
       [[ "$pass" == "deprecated" ]] && suffix=" (deprecated)"
       license_cell="${table_license}"
 
-      echo "| [\`$name\`](#$anchor)$suffix | \`$version\` | $owner | $license_cell | $description |"
+      echo "| [\`$name\`](#$anchor)$suffix | \`$version\` | $author | $license_cell | $description |"
     done
   done
 
@@ -123,7 +123,7 @@ render_plugin() {
     plugin_name=$(basename "$plugin_dir")
     name=$(jq -r '.name' "$plugin_file")
     version=$(jq -r '.version' "$plugin_file")
-    owner=$(jq -r '.owner' "$plugin_file")
+    author=$(jq -r '.author // ""' "$plugin_file")
     description=$(jq -r '.description' "$plugin_file")
     maintainers=$(jq -r '[.maintainers[]?] | join(", ")' "$plugin_file")
     last_updated=$(git log -1 --format=%cI origin/$SOURCE_BRANCH -- "$plugin_dir" 2>/dev/null \
@@ -134,7 +134,7 @@ render_plugin() {
       | grep -v latest | wc -l | tr -d ' ')
     plugin_license=$(jq -r '.license // ""' "$plugin_file")
 
-    render_plugin "false" "$plugin_name" "$name" "$version" "$owner" "$description" \
+    render_plugin "false" "$plugin_name" "$name" "$version" "$author" "$description" \
       "$maintainers" "$last_updated" "$commit_sha" "$commit_sha_short" "$version_count" "$plugin_license"
   done
 
@@ -167,7 +167,7 @@ render_plugin() {
       plugin_name=$(basename "$plugin_dir")
       name=$(jq -r '.name' "$plugin_file")
       version=$(jq -r '.version' "$plugin_file")
-      owner=$(jq -r '.owner' "$plugin_file")
+      author=$(jq -r '.author // ""' "$plugin_file")
       description=$(jq -r '.description' "$plugin_file")
       maintainers=$(jq -r '[.maintainers[]?] | join(", ")' "$plugin_file")
       last_updated=$(git log -1 --format=%cI origin/$SOURCE_BRANCH -- "$plugin_dir" 2>/dev/null \
@@ -178,7 +178,7 @@ render_plugin() {
         | grep -v latest | wc -l | tr -d ' ')
       plugin_license=$(jq -r '.license // ""' "$plugin_file")
 
-      render_plugin "true" "$plugin_name" "$name" "$version" "$owner" "$description" \
+      render_plugin "true" "$plugin_name" "$name" "$version" "$author" "$description" \
         "$maintainers" "$last_updated" "$commit_sha" "$commit_sha_short" "$version_count" "$plugin_license"
     done
   fi

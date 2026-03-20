@@ -113,9 +113,9 @@ else
     # Read from base branch to prevent self-granting permission via the PR itself
     BASE_JSON=$(git show "origin/${BASE_REF}:plugins/${plugin}/plugin.json" 2>/dev/null || echo "")
     if [[ -n "$BASE_JSON" ]]; then
-      OWNER=$(echo "$BASE_JSON" | jq -r '.owner // ""')
+      AUTHOR=$(echo "$BASE_JSON" | jq -r '.author // ""')
       MAINTAINERS=$(echo "$BASE_JSON" | jq -r '[.maintainers[]?] | join(" ")')
-      if [[ "$PR_AUTHOR" == "$OWNER" ]] || [[ " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
+      if [[ "$PR_AUTHOR" == "$AUTHOR" ]] || [[ " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
         HAS_ANY_PERMISSION=1
         break
       fi

@@ -41,7 +41,7 @@ For **updates**, increment the version in `plugin.json` — the validation workf
   "name": "My Plugin",
   "version": "1.0.0",
   "description": "A brief description of what the plugin does",
-  "owner": "your-github-username",
+  "author": "your-github-username",
   "license": "MIT"
 }
 ```
@@ -51,16 +51,16 @@ For **updates**, increment the version in `plugin.json` — the validation workf
 | `name` | Display name of the plugin |
 | `version` | Semantic version (`MAJOR.MINOR.PATCH`) |
 | `description` | Short description shown in the plugin browser |
-| `owner` | Your GitHub username. Used for PR permission checks — must match the GitHub account submitting the PR |
+| `author` | Your GitHub username. Used for PR permission checks — must match the GitHub account submitting the PR |
 | `license` | An [OSI-approved SPDX license identifier](https://spdx.org/licenses/) (e.g. `MIT`, `Apache-2.0`, `GPL-3.0-only`) |
 
-At least one of `owner` or `maintainers` must include your GitHub username. `owner` and `maintainers` are not part of the Dispatcharr plugin spec — they are used by this repository to determine who is permitted to submit PRs for a given plugin.
+At least one of `author` or `maintainers` must include your GitHub username. `author` is also part of the Dispatcharr plugin spec — it is used by this repository to determine who is permitted to submit PRs for a given plugin.
 
 ### Optional Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `maintainers` | `string[]` | Additional GitHub usernames permitted to submit PRs for this plugin |
+| `maintainers` | `string[]` | Additional GitHub usernames permitted to submit PRs for this plugin (in addition to `author`) |
 | `min_dispatcharr_version` | `string` | Minimum Dispatcharr version required (e.g. `v0.19.0` or `0.19.0`) |
 | `max_dispatcharr_version` | `string` | Maximum Dispatcharr version supported. Must be ≥ `min_dispatcharr_version` if both are set |
 | `repo_url` | `string` | URL to the plugin's source repository (must start with `http://` or `https://`) |
@@ -75,7 +75,7 @@ At least one of `owner` or `maintainers` must include your GitHub username. `own
   "name": "My Plugin",
   "version": "1.2.0",
   "description": "Does something useful for Dispatcharr",
-  "owner": "your-github-username",
+  "author": "your-github-username",
   "maintainers": ["collaborator-username"],
   "license": "MIT",
   "min_dispatcharr_version": "v0.19.0",
@@ -93,10 +93,10 @@ Automated validation runs on every PR and posts a comment with results. The foll
 | Folder name | Must be lowercase-kebab-case |
 | `plugin.json` presence | File must exist |
 | JSON syntax | Must be valid JSON |
-| Required fields | `name`, `version`, `description`, `owner` or `maintainers`, `license` |
+| Required fields | `name`, `version`, `description`, `author` or `maintainers`, `license` |
 | Version format | Must be `MAJOR.MINOR.PATCH` (semver) |
 | Version bump | Must be greater than the current published version |
-| Permission | PR author must be listed in `owner` or `maintainers` |
+| Permission | PR author must be listed in `author` or `maintainers` |
 | License | Must be a valid OSI-approved SPDX identifier |
 | `min_dispatcharr_version` | Must be semver if provided |
 | `max_dispatcharr_version` | Must be semver and ≥ `min_dispatcharr_version` if both provided |

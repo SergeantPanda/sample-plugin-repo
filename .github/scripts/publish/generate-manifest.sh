@@ -57,7 +57,7 @@ for plugin_dir in plugins/*/; do
     --argjson versioned_zips "$versioned_zips" \
     --argjson latest_metadata "$latest_metadata" \
     'with_entries(select(.key | IN(
-      "name","version","description","owner","maintainers",
+      "name","version","description","author","maintainers",
       "deprecated","unlisted","min_dispatcharr_version","max_dispatcharr_version","repo_url","discord_thread","license"
     ))) + {
       slug: $plugin_name,
@@ -99,7 +99,7 @@ for plugin_dir in plugins/*/; do
     --arg description "$desc_trimmed" \
     --arg icon_url "$icon_url" \
     --arg manifest_url "$plugin_manifest_url" \
-    --arg author "$(jq -r '.owner // ""' "$plugin_file")" \
+    --arg author "$(jq -r '.author // ""' "$plugin_file")" \
     --arg license "$(jq -r '.license // ""' "$plugin_file")" \
     --arg latest_url "$latest_url" \
     '{

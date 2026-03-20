@@ -79,210 +79,206 @@ has_permission="false"
   echo "### Plugin: \`$PLUGIN_NAME\`"
   echo ""
 
+  TABLE_ROWS=()
+
+  print_table() {
+    echo "| Check | Status | Details |"
+    echo "|-------|:------:|---------|"
+    for row in "${TABLE_ROWS[@]}"; do
+      echo "$row"
+    done
+    echo ""
+  }
+
+  # ── Structural checks (hidden if pass) ───────────────────────────────────────
+
   # Folder name format
   if [[ ! "$PLUGIN_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
-    echo "- ❌ Folder name must be lowercase-kebab-case"
-    echo "  Current: \`$PLUGIN_NAME\`  Example: \`my-plugin-name\`"
+    TABLE_ROWS+=("| Folder name | ❌ | Must be lowercase-kebab-case — got \`$PLUGIN_NAME\`, e.g. \`my-plugin-name\` |")
     failed=1
-  else
-    echo "- ✅ Folder name format valid"
   fi
 
-  # plugin.json existence
+  # plugin.json existence (early exit)
   if [[ ! -f "$PLUGIN_JSON" ]]; then
-    echo "- ❌ plugin.json missing"
-    echo ""
-    echo "❌ **Validation failed for \`$PLUGIN_NAME\`**"
-    # Write outputs and exit
-    echo "result=fail" >> "$GITHUB_OUTPUT"
-    echo "is_new=false" >> "$GITHUB_OUTPUT"
-    echo "has_permission=false" >> "$GITHUB_OUTPUT"
-    exit 0  # non-fatal to matrix - report fragment is written
-  fi
-  echo "- ✅ plugin.json exists"
-
-  # README (optional)
-  if [[ -f "$README" ]]; then
-    echo "- ✅ README.md exists"
-  fi
-
-  # JSON syntax
-  if ! jq empty "$PLUGIN_JSON" 2>/dev/null; then
-    echo "- ❌ Invalid JSON in plugin.json"
-    echo ""
-    echo "❌ **Validation failed for \`$PLUGIN_NAME\`**"
+    TABLE_ROWS+=("| \`plugin.json\` | ❌ | File missing |")
+    print_table
     echo "result=fail" >> "$GITHUB_OUTPUT"
     echo "is_new=false" >> "$GITHUB_OUTPUT"
     echo "has_permission=false" >> "$GITHUB_OUTPUT"
     exit 0
   fi
-  echo "- ✅ JSON valid"
 
-  # Required fields
+  # JSON syntax (early exit)
+  if ! jq empty "$PLUGIN_JSON" 2>/dev/null; then
+    TABLE_ROWS+=("| JSON syntax | ❌ | Invalid JSON in plugin.json |")
+    print_table
+    echo "result=fail" >> "$GITHUB_OUTPUT"
+    echo "is_new=false" >> "$GITHUB_OUTPUT"
+    echo "has_permission=false" >> "$GITHUB_OUTPUT"
+    exit 0
+  fi
+
+  # ── Required content ──────────────────────────────────────────────────────────
+
+  # Required fields: name, version, description — shown as a combined row
+  MISSING_FIELDS=()
   for key in name version description; do
     if ! jq -e ".\"$key\"" "$PLUGIN_JSON" >/dev/null 2>&1; then
-      echo "- ❌ Required property \`$key\` missing"
+      MISSING_FIELDS+=("\`$key\`")
       failed=1
     fi
   done
+  if [[ ${#MISSING_FIELDS[@]} -gt 0 ]]; then
+    MISSING_LIST=$(IFS=", "; echo "${MISSING_FIELDS[*]}")
+    TABLE_ROWS+=("| Required fields | ❌ | Missing: $MISSING_LIST |")
+  else
+    TABLE_ROWS+=("| Required fields | ✅ | |")
+  fi
 
   # Extract metadata
-  OWNER=$(jq -r '.owner // ""' "$PLUGIN_JSON")
+  AUTHOR=$(jq -r '.author // ""' "$PLUGIN_JSON")
   MAINTAINERS=$(jq -r '[.maintainers[]?] | join(" ")' "$PLUGIN_JSON")
   VERSION=$(jq -r '.version' "$PLUGIN_JSON")
 
-  # owner/maintainers presence
-  if [[ -z "$OWNER" ]] && [[ -z "$MAINTAINERS" ]]; then
-    echo "- ❌ At least one of \`owner\` or \`maintainers\` must be set"
-    echo "  **Action required:** Add your GitHub username to \`owner\`, \`maintainers\`, or both."
-    echo "  Example: \`\"owner\": \"your-github-username\"\`"
-    echo "  > Note: These fields are required by this repository to manage contribution permissions."
+  # Author / maintainers
+  if [[ -z "$AUTHOR" ]] && [[ -z "$MAINTAINERS" ]]; then
+    TABLE_ROWS+=("| Author / maintainers | ❌ | At least one of \`author\` or \`maintainers\` must include your GitHub username |")
     failed=1
-  fi
-
-  # Permission check - use base branch version to prevent self-granting via the PR
-  IS_REPO_MAINTAINER=$(check_repo_maintainer "$PR_AUTHOR")
-  if [[ "$IS_REPO_MAINTAINER" -eq 1 ]]; then
-    echo "- ✅ Permission check passed"
-    has_permission="true"
-  elif git show "origin/${BASE_REF}:${PLUGIN_JSON}" > /dev/null 2>&1; then
-    BASE_JSON=$(git show "origin/${BASE_REF}:${PLUGIN_JSON}")
-    BASE_OWNER=$(echo "$BASE_JSON" | jq -r '.owner // ""')
-    BASE_MAINTAINERS=$(echo "$BASE_JSON" | jq -r '[.maintainers[]?] | join(" ")')
-    if [[ "$PR_AUTHOR" == "$BASE_OWNER" ]] || [[ " $BASE_MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
-      echo "- ✅ Permission check passed"
-      has_permission="true"
-    else
-      echo "- ❌ **Permission denied**: \`$PR_AUTHOR\` is not listed in \`owner\` or \`maintainers\` on the base branch"
-      failed=1
-    fi
+  elif [[ -n "$AUTHOR" ]]; then
+    TABLE_ROWS+=("| Author / maintainers | ✅ | \`$AUTHOR\` |")
   else
-    # New plugin - no base version to check against.
-    # The PR author must include themselves in owner or maintainers so future
-    # PRs can be authorized. This is a correctable validation error, not a closure.
-    if [[ "$PR_AUTHOR" == "$OWNER" ]] || [[ " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
-      echo "- ✅ New plugin: \`$PR_AUTHOR\` listed in \`owner\`/\`maintainers\`"
-      has_permission="true"
-    else
-      echo "- ❌ Your GitHub username (\`$PR_AUTHOR\`) must appear in \`owner\` or \`maintainers\` for new plugin submissions"
-      echo "  Add \`\"owner\": \"$PR_AUTHOR\"\` to your plugin.json"
-      failed=1
-    fi
+    TABLE_ROWS+=("| Author / maintainers | ✅ | |")
   fi
 
-  # Version format
-  if [[ $(validate_semver "$VERSION") -eq 1 ]]; then
-    echo "- ✅ Version format valid (\`$VERSION\`)"
-  else
-    echo "- ❌ Version must be semver (got \`$VERSION\`, expected X.Y.Z)"
-    failed=1
-  fi
-
-  # min_dispatcharr_version (optional)
-  MIN_DA_VERSION=$(jq -r '.min_dispatcharr_version // ""' "$PLUGIN_JSON")
-  if [[ -n "$MIN_DA_VERSION" ]]; then
-    if [[ $(validate_dispatcharr_version "$MIN_DA_VERSION") -eq 1 ]]; then
-      echo "- ✅ Minimum Dispatcharr version valid (\`$MIN_DA_VERSION\`)"
-    else
-      echo "- ❌ \`min_dispatcharr_version\` must be semver (got \`$MIN_DA_VERSION\`, expected X.Y.Z or vX.Y.Z)"
-      failed=1
-    fi
-  fi
-
-  # max_dispatcharr_version (optional)
-  MAX_DA_VERSION=$(jq -r '.max_dispatcharr_version // ""' "$PLUGIN_JSON")
-  if [[ -n "$MAX_DA_VERSION" ]]; then
-    if [[ $(validate_dispatcharr_version "$MAX_DA_VERSION") -eq 1 ]]; then
-      echo "- ✅ Maximum Dispatcharr version valid (\`$MAX_DA_VERSION\`)"
-    else
-      echo "- ❌ \`max_dispatcharr_version\` must be semver (got \`$MAX_DA_VERSION\`, expected X.Y.Z or vX.Y.Z)"
-      failed=1
-    fi
-    # Sanity check: max must be >= min if both are set
-    if [[ -n "$MIN_DA_VERSION" && $(validate_dispatcharr_version "$MAX_DA_VERSION") -eq 1 && $(validate_dispatcharr_version "$MIN_DA_VERSION") -eq 1 ]]; then
-      _max="${MAX_DA_VERSION#v}"
-      _min="${MIN_DA_VERSION#v}"
-      if ! version_greater_than "$_max" "$_min" && [[ "$_max" != "$_min" ]]; then
-        echo "- ❌ \`max_dispatcharr_version\` (\`$MAX_DA_VERSION\`) must be greater than or equal to \`min_dispatcharr_version\` (\`$MIN_DA_VERSION\`)"
-        failed=1
-      fi
-    fi
-  fi
-
-  # URL fields (optional)
-  REPO_URL=$(jq -r '.repo_url // ""' "$PLUGIN_JSON")
-  DISCORD_THREAD=$(jq -r '.discord_thread // ""' "$PLUGIN_JSON")
-  if [[ -n "$REPO_URL" ]]; then
-    if [[ "$REPO_URL" =~ ^https?:// ]]; then
-      echo "- ✅ \`repo_url\` valid"
-    else
-      echo "- ❌ \`repo_url\` must start with \`http://\` or \`https://\` (got \`$REPO_URL\`)"
-      failed=1
-    fi
-  fi
-  if [[ -n "$DISCORD_THREAD" ]]; then
-    if [[ "$DISCORD_THREAD" =~ ^https?:// ]]; then
-      echo "- ✅ \`discord_thread\` valid"
-    else
-      echo "- ❌ \`discord_thread\` must start with \`http://\` or \`https://\` (got \`$DISCORD_THREAD\`)"
-      failed=1
-    fi
-  fi
-
-  # License (required): must be a valid OSI-approved SPDX identifier
+  # License (required)
   LICENSE_ID=$(jq -r '.license // ""' "$PLUGIN_JSON")
   if [[ -z "$LICENSE_ID" ]]; then
-    echo "- ❌ \`license\` is required - provide an OSI-approved SPDX identifier (e.g. \`MIT\`, \`Apache-2.0\`). See https://spdx.org/licenses/ (filter: OSI Approved)"
+    TABLE_ROWS+=("| License | ❌ | \`license\` is required — provide an [OSI-approved SPDX identifier](https://spdx.org/licenses/) (e.g. \`MIT\`, \`Apache-2.0\`) |")
     failed=1
   else
     SPDX_JSON=$(curl -fsSL "https://raw.githubusercontent.com/spdx/license-list-data/main/json/licenses.json" 2>/dev/null || echo "")
     if [[ -z "$SPDX_JSON" ]]; then
-      echo "- ⚠️ Could not fetch SPDX license list - skipping license ID validation"
+      TABLE_ROWS+=("| License | ⚠️ | Could not fetch SPDX license list — skipping validation |")
     else
       SPDX_VALID=$(echo "$SPDX_JSON" | jq --arg lid "$LICENSE_ID" '[.licenses[] | select(.isOsiApproved == true) | .licenseId] | any(. == $lid)')
       if [[ "$SPDX_VALID" == "true" ]]; then
-        echo "- ✅ License valid (\`$LICENSE_ID\`)"
+        TABLE_ROWS+=("| License | ✅ | \`$LICENSE_ID\` |")
       else
-        echo "- ❌ \`$LICENSE_ID\` is not a valid OSI-approved SPDX License Identifier - plugins must be distributed under an open source license. See https://spdx.org/licenses/ (filter: OSI Approved)"
+        TABLE_ROWS+=("| License | ❌ | \`$LICENSE_ID\` is not an [OSI-approved SPDX identifier](https://spdx.org/licenses/) |")
         failed=1
       fi
     fi
   fi
 
-  # Version bump check
-  if git show "origin/${BASE_REF}:${PLUGIN_JSON}" > /dev/null 2>&1; then
-    OLD_VERSION=$(git show "origin/${BASE_REF}:${PLUGIN_JSON}" | jq -r '.version')
-    if version_greater_than "$VERSION" "$OLD_VERSION"; then
-      echo "- ✅ Version bump valid (\`$OLD_VERSION\` -> \`$VERSION\`)"
+  # ── Access control ────────────────────────────────────────────────────────────
+
+  # Permission check — use base branch version to prevent self-granting via the PR
+  IS_REPO_MAINTAINER=$(check_repo_maintainer "$PR_AUTHOR")
+  if [[ "$IS_REPO_MAINTAINER" -eq 1 ]]; then
+    TABLE_ROWS+=("| Permission | ✅ | |")
+    has_permission="true"
+  elif git show "origin/${BASE_REF}:${PLUGIN_JSON}" > /dev/null 2>&1; then
+    BASE_JSON=$(git show "origin/${BASE_REF}:${PLUGIN_JSON}")
+    BASE_AUTHOR=$(echo "$BASE_JSON" | jq -r '.author // ""')
+    BASE_MAINTAINERS=$(echo "$BASE_JSON" | jq -r '[.maintainers[]?] | join(" ")')
+    if [[ "$PR_AUTHOR" == "$BASE_AUTHOR" ]] || [[ " $BASE_MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
+      TABLE_ROWS+=("| Permission | ✅ | |")
+      has_permission="true"
     else
-      echo "- ❌ Version \`$VERSION\` must be greater than current version \`$OLD_VERSION\`"
+      TABLE_ROWS+=("| Permission | ❌ | \`$PR_AUTHOR\` is not listed in \`author\` or \`maintainers\` |")
       failed=1
     fi
   else
-    echo "- ✅ New plugin (version \`$VERSION\`)"
+    # New plugin — PR author must list themselves so future PRs can be authorized
+    if [[ "$PR_AUTHOR" == "$AUTHOR" ]] || [[ " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
+      TABLE_ROWS+=("| Permission | ✅ | New plugin — \`$PR_AUTHOR\` listed in \`author\`/\`maintainers\` |")
+      has_permission="true"
+    else
+      TABLE_ROWS+=("| Permission | ❌ | Add \`\"author\": \"$PR_AUTHOR\"\` to plugin.json |")
+      failed=1
+    fi
+  fi
+
+  # ── Version checks ────────────────────────────────────────────────────────────
+
+  # Version format
+  if [[ $(validate_semver "$VERSION") -eq 1 ]]; then
+    TABLE_ROWS+=("| Version | ✅ | \`$VERSION\` |")
+  else
+    TABLE_ROWS+=("| Version | ❌ | \`$VERSION\` is not valid semver — expected \`X.Y.Z\` |")
+    failed=1
+  fi
+
+  # Version bump
+  if git show "origin/${BASE_REF}:${PLUGIN_JSON}" > /dev/null 2>&1; then
+    OLD_VERSION=$(git show "origin/${BASE_REF}:${PLUGIN_JSON}" | jq -r '.version')
+    if version_greater_than "$VERSION" "$OLD_VERSION"; then
+      TABLE_ROWS+=("| Version bump | ✅ | \`$OLD_VERSION\` → \`$VERSION\` |")
+    else
+      TABLE_ROWS+=("| Version bump | ❌ | \`$VERSION\` must be greater than current \`$OLD_VERSION\` |")
+      failed=1
+    fi
+  else
+    TABLE_ROWS+=("| Version bump | ✅ | New plugin |")
     is_new="true"
   fi
 
-  # Summary
-  echo ""
-  # if [[ $failed -eq 0 ]]; then
-  #   echo "✅ **All checks passed for \`$PLUGIN_NAME\`**"
-  # else
-  #   echo "❌ **Validation failed for \`$PLUGIN_NAME\`**"
-  # fi
+  # Dispatcharr version constraints (optional, hidden if pass)
+  MIN_DA_VERSION=$(jq -r '.min_dispatcharr_version // ""' "$PLUGIN_JSON")
+  MAX_DA_VERSION=$(jq -r '.max_dispatcharr_version // ""' "$PLUGIN_JSON")
 
-  # Metadata table row (pipe-delimited, consumed by aggregate-report.sh)
+  if [[ -n "$MIN_DA_VERSION" ]] && [[ $(validate_dispatcharr_version "$MIN_DA_VERSION") -eq 0 ]]; then
+    TABLE_ROWS+=("| \`min_dispatcharr_version\` | ❌ | \`$MIN_DA_VERSION\` is not valid semver — expected \`X.Y.Z\` or \`vX.Y.Z\` |")
+    failed=1
+  fi
+
+  if [[ -n "$MAX_DA_VERSION" ]] && [[ $(validate_dispatcharr_version "$MAX_DA_VERSION") -eq 0 ]]; then
+    TABLE_ROWS+=("| \`max_dispatcharr_version\` | ❌ | \`$MAX_DA_VERSION\` is not valid semver — expected \`X.Y.Z\` or \`vX.Y.Z\` |")
+    failed=1
+  fi
+
+  # min/max range sanity (hidden if pass)
+  if [[ -n "$MIN_DA_VERSION" && -n "$MAX_DA_VERSION" ]]; then
+    if [[ $(validate_dispatcharr_version "$MAX_DA_VERSION") -eq 1 && $(validate_dispatcharr_version "$MIN_DA_VERSION") -eq 1 ]]; then
+      _max="${MAX_DA_VERSION#v}"
+      _min="${MIN_DA_VERSION#v}"
+      if ! version_greater_than "$_max" "$_min" && [[ "$_max" != "$_min" ]]; then
+        TABLE_ROWS+=("| Version range | ❌ | \`max_dispatcharr_version\` (\`$MAX_DA_VERSION\`) must be ≥ \`min_dispatcharr_version\` (\`$MIN_DA_VERSION\`) |")
+        failed=1
+      fi
+    fi
+  fi
+
+  # ── Optional link fields (hidden if pass) ────────────────────────────────────
+
+  REPO_URL=$(jq -r '.repo_url // ""' "$PLUGIN_JSON")
+  DISCORD_THREAD=$(jq -r '.discord_thread // ""' "$PLUGIN_JSON")
+
+  if [[ -n "$REPO_URL" ]] && [[ ! "$REPO_URL" =~ ^https?:// ]]; then
+    TABLE_ROWS+=("| \`repo_url\` | ❌ | Must start with \`http://\` or \`https://\` |")
+    failed=1
+  fi
+
+  if [[ -n "$DISCORD_THREAD" ]] && [[ ! "$DISCORD_THREAD" =~ ^https?:// ]]; then
+    TABLE_ROWS+=("| \`discord_thread\` | ❌ | Must start with \`http://\` or \`https://\` |")
+    failed=1
+  fi
+
+  print_table
+
+  # Metadata row (tab-delimited, consumed by aggregate-report.sh)
   echo "<!--META_ROW:$(jq -r '[
     .name // "",
     .version // "",
     .description // "",
-    .owner // "",
+    .author // "",
     ([ .maintainers[]? ] | join(", ")),
     (.repo_url // ""),
     (.discord_thread // "")
   ] | @tsv' "$PLUGIN_JSON")-->"
 
 } > "$OUTPUT_FILE"
+
 
 # Write job outputs
 if [[ $failed -eq 0 ]]; then

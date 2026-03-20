@@ -24,7 +24,7 @@ Every PR runs automated validation that checks:
 - Folder name is lowercase-kebab-case
 - `plugin.json` is valid and contains required fields
 - Version is incremented for existing plugins
-- PR author is listed in `owner` or `maintainers`
+- PR author is listed in `author` or `maintainers`
 - `.github/` files are not modified by non-maintainers
 - Python code is scanned by CodeQL (required check)
 

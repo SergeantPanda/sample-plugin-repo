@@ -484,7 +484,7 @@ jobs:
   # --------------------------------------------------------------------------
   plugin-pr-check:
     name: Plugin PR Check
-    needs: [detect-changes, codeql-analyze, report]
+    needs: [detect-changes, codeql-analyze, validate-plugin, report]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -493,7 +493,9 @@ jobs:
         env:
           DETECT_RESULT: ${{ needs.detect-changes.result }}
           CLOSE_PR: ${{ needs.detect-changes.outputs.close_pr }}
-          CODEQL_RESULT: ${{ needs.codeql-analyze.outputs.codeql_status }}
+          CODEQL_RESULT: ${{ needs.codeql-analyze.result }}
+          CODEQL_STATUS: ${{ needs.codeql-analyze.outputs.codeql_status }}
+          VALIDATE_RESULT: ${{ needs.validate-plugin.result }}
           REPORT_RESULT: ${{ needs.report.result }}
         run: |
           if [[ "$DETECT_RESULT" != "success" ]]; then
@@ -504,8 +506,12 @@ jobs:
             echo "::error::PR is unauthorized - no permission to modify these plugins."
             exit 1
           fi
-          if [[ "$CODEQL_RESULT" == "failure" ]]; then
+          if [[ "$CODEQL_RESULT" == "failure" || "$CODEQL_STATUS" == "failure" ]]; then
             echo "::error::CodeQL security analysis failed. See the Security tab for details."
+            exit 1
+          fi
+          if [[ "$VALIDATE_RESULT" == "failure" || "$VALIDATE_RESULT" == "cancelled" ]]; then
+            echo "::error::One or more plugin validations failed. See PR comment for details."
             exit 1
           fi
           if [[ "$REPORT_RESULT" != "success" ]]; then
