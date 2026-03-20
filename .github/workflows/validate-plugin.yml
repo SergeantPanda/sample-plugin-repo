@@ -79,6 +79,9 @@ jobs:
       - name: Restore trusted scripts
         run: mkdir -p .github && cp -r /tmp/trusted-scripts .github/scripts
 
+      - name: Re-fetch base branch refs
+        run: git fetch https://github.com/${{ github.repository }} ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
+
       - name: Detect changed plugins
         id: detect
         env:
@@ -129,6 +132,9 @@ jobs:
 
       - name: Restore trusted scripts
         run: mkdir -p .github && cp -r /tmp/trusted-scripts .github/scripts
+
+      - name: Re-fetch base branch refs
+        run: git fetch https://github.com/${{ github.repository }} ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}
 
       - name: Validate ${{ matrix.plugin }}
         id: validate
