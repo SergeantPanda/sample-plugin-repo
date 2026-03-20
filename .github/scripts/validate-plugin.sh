@@ -38,6 +38,16 @@ check_repo_maintainer() {
   fi
 }
 
+# Validate dispatcharr version (semver with optional v prefix)
+validate_dispatcharr_version() {
+  local version=$1
+  if [[ "$version" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "1"
+  else
+    echo "0"
+  fi
+}
+
 # Validate semantic version format
 validate_semver() {
   local version=$1
@@ -63,6 +73,11 @@ version_greater_than() {
   if (( NEW_PATCH > OLD_PATCH )); then return 0; fi
   return 1
 }
+
+# Track whether the PR author has permission for at least one plugin
+plugins_with_any_permission=0
+# Track whether any modified plugin is new (not yet on base branch)
+has_new_plugin=0
 
 # Validate a single plugin
 validate_plugin() {
@@ -139,6 +154,7 @@ validate_plugin() {
     failed=1
   else
     echo "- ✅ Permission check passed"
+    plugins_with_any_permission=1
   fi
   
   # Validate version format
@@ -149,6 +165,17 @@ validate_plugin() {
     failed=1
   fi
   
+  # Validate optional min_dispatcharr_version
+  MIN_DA_VERSION=$(jq -r '.min_dispatcharr_version // ""' "$plugin_json")
+  if [[ -n "$MIN_DA_VERSION" ]]; then
+    if [[ $(validate_dispatcharr_version "$MIN_DA_VERSION") -eq 1 ]]; then
+      echo "- ✅ Minimum Dispatcharr version valid (\`$MIN_DA_VERSION\`)"
+    else
+      echo "- ❌ \`min_dispatcharr_version\` must be semver format (got \`$MIN_DA_VERSION\`, expected X.Y.Z or vX.Y.Z)"
+      failed=1
+    fi
+  fi
+
   # Check version bump for existing plugins
   if git show origin/$BASE_REF:"$plugin_json" > /dev/null 2>&1; then
     OLD_VERSION=$(git show origin/$BASE_REF:"$plugin_json" | jq -r '.version')
@@ -160,6 +187,7 @@ validate_plugin() {
     fi
   else
     echo "- ✅ New plugin (version \`$VERSION\`)"
+    has_new_plugin=1
   fi
   
   # Summary for this plugin
@@ -273,7 +301,25 @@ main() {
       all_tables+="$PLUGIN_TABLE_ROW"$'\n'
     fi
   done
-  
+
+  # Auto-close if the author has no permission for any modified plugin, and all modified plugins already exist
+  if [[ $plugins_with_any_permission -eq 0 ]] && [[ $has_new_plugin -eq 0 ]]; then
+    echo ""
+    echo "---"
+    echo ""
+    echo "## PR Closed: Unauthorized"
+    echo ""
+    echo "Your GitHub username (\`$PR_AUTHOR\`) does not appear in \`owner\` or \`maintainers\` for any of the plugin(s) in this PR. This PR has been automatically closed."
+    echo ""
+    echo "If you are submitting a new plugin, add your GitHub username to the \`owner\` field in your \`plugin.json\`."
+    if [[ -n "${DISCORD_URL:-}" ]]; then
+      echo ""
+      echo "For help or to discuss plugins:"
+      echo "- [Dispatcharr Discord]($DISCORD_URL)"
+    fi
+    exit 2
+  fi
+
   # Print overall status
   echo ""
   echo "---"

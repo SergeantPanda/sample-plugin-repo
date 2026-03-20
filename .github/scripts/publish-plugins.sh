@@ -96,7 +96,10 @@ for plugin_dir in plugins/*/; do
   # Calculate checksums for the ZIP
   checksum_md5=$(md5sum "$zip_path" | awk '{print $1}')
   checksum_sha256=$(shasum -a 256 "$zip_path" | awk '{print $1}')
-  
+
+  # Read min_dispatcharr_version from plugin.json at this point in time
+  min_da_version=$(jq -r '.min_dispatcharr_version // ""' "$plugin_dir/plugin.json")
+
   # Create metadata file for this version
   jq -n \
     --arg commit_sha "$commit_sha" \
@@ -106,6 +109,7 @@ for plugin_dir in plugins/*/; do
     --arg last_updated "$last_updated" \
     --arg checksum_md5 "$checksum_md5" \
     --arg checksum_sha256 "$checksum_sha256" \
+    --arg min_da_version "$min_da_version" \
     '{
       version: $version,
       commit_sha: $commit_sha,
@@ -114,7 +118,7 @@ for plugin_dir in plugins/*/; do
       last_updated: $last_updated,
       checksum_md5: $checksum_md5,
       checksum_sha256: $checksum_sha256
-    }' > "$metadata_path"
+    } + (if $min_da_version != "" then {min_dispatcharr_version: $min_da_version} else {} end)' > "$metadata_path"
   
   # Update latest ZIP to point to this new version
   cp "$zip_path" "releases/$plugin_name/${plugin_name}-latest.zip"
@@ -347,10 +351,12 @@ for plugin_dir in plugins/*/; do
     
     # Build complete plugin manifest entry
     plugin_entry=$(jq \
+      --arg plugin_name "$plugin_name" \
       --arg latest_url "$latest_url" \
       --argjson versioned_zips "$versioned_zips" \
       --argjson latest_metadata "$latest_metadata" \
-      'with_entries(select(.key | IN("name","version","description","owner","maintainers","deprecated","unlisted"))) + {
+      'with_entries(select(.key | IN("name","version","description","owner","maintainers","deprecated","unlisted","min_dispatcharr_version","repo_url","discord_thread"))) + {
+        slug: $plugin_name,
         latest_url: $latest_url, 
         versions: $versioned_zips
       } + (

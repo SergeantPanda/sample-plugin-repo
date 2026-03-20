@@ -78,20 +78,25 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          DISCORD_URL: ${{ vars.DISCORD_URL }}
         run: |
+          set +e
           .github/scripts/validate-plugin.sh \
             "${{ github.event.pull_request.number }}" \
             "${{ github.actor }}" \
             "${{ github.event.pull_request.base.ref }}" \
             > pr_comment.txt
-        continue-on-error: true
-
-      - name: Save validation result
-        if: always()
-        run: echo "${{ steps.validate.outcome }}" > validation_outcome.txt
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 2 ]; then
+            echo "result=close" >> $GITHUB_OUTPUT
+          elif [ $EXIT_CODE -eq 0 ]; then
+            echo "result=success" >> $GITHUB_OUTPUT
+          else
+            echo "result=failure" >> $GITHUB_OUTPUT
+          fi
 
       - name: Post or update PR comment
-        if: always()
+        if: always() && steps.validate.outputs.result != 'close'
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -110,11 +115,25 @@ jobs:
           fi
         continue-on-error: true
 
-      - name: Fail workflow if validation failed
-        if: always()
+      - name: Close unauthorized PR
+        if: always() && steps.validate.outputs.result == 'close'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          OUTCOME=$(cat validation_outcome.txt)
-          if [ "$OUTCOME" != "success" ]; then
-            echo "::error::Plugin validation failed. See PR comment for details."
-            exit 1
+          if [ -f pr_comment.txt ]; then
+            COMMENT=$(cat pr_comment.txt)
+            EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->")) | .id')
+            if [ -n "$EXISTING_COMMENT_ID" ]; then
+              gh api "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -X PATCH -f body="$COMMENT"
+            else
+              gh pr comment $PR_NUMBER --body "$COMMENT"
+            fi
           fi
+          gh pr close $PR_NUMBER
+
+      - name: Fail workflow if validation failed
+        if: always() && steps.validate.outputs.result == 'failure'
+        run: |
+          echo "::error::Plugin validation failed. See PR comment for details."
+          exit 1

@@ -24,6 +24,9 @@ Every PR runs automated validation that checks:
 - Version is incremented for existing plugins
 - PR author is listed in `owner` or `maintainers`
 - `.github/` files are not modified by non-maintainers
+- Python code is scanned by CodeQL (required check)
+
+PRs where the author has no permission for any modified plugin are automatically closed with instructions.
 
 Results are posted as a comment on the PR.
 
@@ -39,6 +42,8 @@ On merge to `main`, each plugin is:
 ## Contributing
 
 ### Adding or Updating a Plugin
+
+This repository is for publishing plugins to the official Dispatcharr plugin manifest. Development and testing should happen in your own repository first. Once your plugin is stable, submit a PR here to publish it.
 
 1. Fork the repository and create a branch
 2. Create or modify your plugin folder under `plugins/your-plugin-name/`
@@ -63,6 +68,9 @@ For updates, increment the version in `plugin.json`.
 
 **Optional fields:**
 - `maintainers` - Array of additional GitHub usernames who can submit PRs for this plugin
+- `min_dispatcharr_version` - Minimum Dispatcharr version required (e.g. `v0.19.0` or `0.19.0`)
+- `repo_url` - URL to the plugin's source repository
+- `discord_thread` - URL or ID of the associated Discord thread
 - `deprecated` - Marks plugin as deprecated (default: `false`)
 - `unlisted` - Hides plugin from the releases README (default: `false`)
 
