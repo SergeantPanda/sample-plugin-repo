@@ -135,20 +135,11 @@ jobs:
         id: merge
         run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Generate scoped CodeQL config
-        run: |
-          echo "paths:" > codeql-config.yml
-          echo '${{ needs.detect-changes.outputs.matrix }}' \
-            | jq -r '.[] | "  - plugins/\(.)"' >> codeql-config.yml
-          echo "CodeQL analysis scoped to:"
-          cat codeql-config.yml
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: python
           queries: security-and-quality
-          config-file: codeql-config.yml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
