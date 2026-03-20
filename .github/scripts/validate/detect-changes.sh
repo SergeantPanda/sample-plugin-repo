@@ -40,17 +40,17 @@ has_write_access() {
 
 MERGE_BASE=$(git merge-base "origin/${BASE_REF}" HEAD)
 
-# --- .github/ protection check ---
-GITHUB_CHANGES=$(git diff --name-only "$MERGE_BASE" HEAD | grep '^\.github/' || true)
-if [[ -n "$GITHUB_CHANGES" ]]; then
+# --- Protection check: only plugins/ may be modified by non-maintainers ---
+OUTSIDE_CHANGES=$(git diff --name-only "$MERGE_BASE" HEAD | grep -v '^plugins/' || true)
+if [[ -n "$OUTSIDE_CHANGES" ]]; then
   if [[ "$(has_write_access "$PR_AUTHOR")" -ne 1 ]]; then
-    echo "## Workflow file modification denied" >&2
+    echo "## Modification outside plugins/ denied" >&2
     echo "" >&2
-    echo "This PR modifies files under \`.github/\`, which requires admin, maintain, or write access to the repository." >&2
+    echo "This PR modifies files outside of \`plugins/\`, which requires admin, maintain, or write access to the repository." >&2
     echo "" >&2
     echo "**Modified files:**" >&2
     echo "\`\`\`" >&2
-    echo "$GITHUB_CHANGES" >&2
+    echo "$OUTSIDE_CHANGES" >&2
     echo "\`\`\`" >&2
     exit 1
   fi
