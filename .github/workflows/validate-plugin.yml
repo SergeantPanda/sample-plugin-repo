@@ -91,7 +91,7 @@ jobs:
         run: |
           chmod +x .github/scripts/validate/*.sh
           .github/scripts/validate/detect-changes.sh \
-            "${{ github.actor }}" \
+            "${{ github.event.pull_request.user.login }}" \
             "${{ github.event.pull_request.base.ref }}"
 
   # --------------------------------------------------------------------------
@@ -148,7 +148,7 @@ jobs:
           set +e
           .github/scripts/validate/validate.sh \
             "${{ matrix.plugin }}" \
-            "${{ github.actor }}" \
+            "${{ github.event.pull_request.user.login }}" \
             "${{ github.event.pull_request.base.ref }}" \
             "${{ matrix.plugin }}.fragment.md"
           echo "exit_code=$?" >> $GITHUB_OUTPUT
@@ -199,7 +199,7 @@ jobs:
           set +e
           .github/scripts/validate/report.sh \
             "${{ github.event.pull_request.number }}" \
-            "${{ github.actor }}" \
+            "${{ github.event.pull_request.user.login }}" \
             "${{ needs.detect-changes.outputs.plugin_count }}" \
             "false" \
             "fragments"
@@ -236,7 +236,7 @@ jobs:
           chmod +x .github/scripts/validate/*.sh
           .github/scripts/validate/report.sh \
             "${{ github.event.pull_request.number }}" \
-            "${{ github.actor }}" \
+            "${{ github.event.pull_request.user.login }}" \
             "${{ needs.detect-changes.outputs.plugin_count }}" \
             "true" \
             "/dev/null"
