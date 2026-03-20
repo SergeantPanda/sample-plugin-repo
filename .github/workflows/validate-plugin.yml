@@ -3,6 +3,7 @@ name: Validate Plugin
 permissions:
   contents: read
   pull-requests: write
+  security-events: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -96,10 +97,39 @@ jobs:
             "${{ github.event.pull_request.base.ref }}"
 
   # --------------------------------------------------------------------------
-  # Job 3: Validate each plugin in parallel via matrix
+  # Job 3: CodeQL security and quality analysis (runs in parallel with detect-changes)
+  # --------------------------------------------------------------------------
+  codeql-analyze:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR plugins for analysis
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: plugins
+          sparse-checkout-cone-mode: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: python
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:python
+
+  # --------------------------------------------------------------------------
+  # Job 4: Validate each plugin in parallel via matrix
   # --------------------------------------------------------------------------
   validate-plugin:
-    needs: detect-changes
+    needs: [detect-changes, codeql-analyze]
     if: needs.detect-changes.outputs.close_pr == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -167,10 +197,10 @@ jobs:
         run: exit 1
 
   # --------------------------------------------------------------------------
-  # Job 4: Aggregate all fragments, post PR comment, set final status
+  # Job 5: Aggregate all fragments, post PR comment, set final status
   # --------------------------------------------------------------------------
   report:
-    needs: [detect-changes, validate-plugin]
+    needs: [detect-changes, validate-plugin, codeql-analyze]
     if: always() && needs.detect-changes.result == 'success' && needs.detect-changes.outputs.close_pr == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -195,6 +225,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           DISCORD_URL: ${{ vars.DISCORD_URL }}
+          CODEQL_RESULT: ${{ needs.codeql-analyze.result }}
         run: |
           chmod +x .github/scripts/validate/*.sh
           set +e
@@ -213,7 +244,7 @@ jobs:
           exit 1
 
   # --------------------------------------------------------------------------
-  # Job 5: Auto-close unauthorized PRs
+  # Job 6: Auto-close unauthorized PRs
   # --------------------------------------------------------------------------
   close-unauthorized:
     needs: detect-changes
@@ -243,14 +274,14 @@ jobs:
             "/dev/null"
 
   # --------------------------------------------------------------------------
-  # Job 6: Gate — single fixed status check for branch protection rules
-  #   Reference this job by name "validate-gate" in your branch protection.
-  #   Passes only when detect-changes + all matrix validations + report all
-  #   succeed. Fails for any error, including unauthorized PRs.
+  # Job 7: Gate — single fixed status check for branch protection rules
+  #   Reference this job by name "Plugin PR Check" in your branch protection.
+  #   Passes only when detect-changes + CodeQL + all matrix validations + report
+  #   all succeed. Fails for any error, including unauthorized PRs.
   # --------------------------------------------------------------------------
   plugin-pr-check:
     name: Plugin PR Check
-    needs: [detect-changes, report]
+    needs: [detect-changes, codeql-analyze, report]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -259,6 +290,7 @@ jobs:
         env:
           DETECT_RESULT: ${{ needs.detect-changes.result }}
           CLOSE_PR: ${{ needs.detect-changes.outputs.close_pr }}
+          CODEQL_RESULT: ${{ needs.codeql-analyze.result }}
           REPORT_RESULT: ${{ needs.report.result }}
         run: |
           if [[ "$DETECT_RESULT" != "success" ]]; then
@@ -267,6 +299,10 @@ jobs:
           fi
           if [[ "$CLOSE_PR" == "true" ]]; then
             echo "::error::PR is unauthorized — no permission to modify these plugins."
+            exit 1
+          fi
+          if [[ "$CODEQL_RESULT" == "failure" ]]; then
+            echo "::error::CodeQL security analysis failed. See the Security tab for details."
             exit 1
           fi
           if [[ "$REPORT_RESULT" != "success" ]]; then

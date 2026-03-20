@@ -1,10 +1,9 @@
 name: CodeQL
 
+# Pull request analysis is handled by validate-plugin.yml (codeql-analyze job),
+# which runs CodeQL as part of the plugin validation flow.
 on:
   push:
-    branches: [main]
-    paths: ['plugins/**']
-  pull_request:
     branches: [main]
     paths: ['plugins/**']
   schedule:

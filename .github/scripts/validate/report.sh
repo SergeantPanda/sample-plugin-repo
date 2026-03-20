@@ -130,6 +130,34 @@ done
       echo "$TABLE_SEP"
       echo "$TABLE_ROWS"
     fi
+
+    if [[ -n "${CODEQL_RESULT:-}" && "${CODEQL_RESULT:-}" != "skipped" ]]; then
+      echo ""
+      echo "---"
+      echo ""
+      echo "## Code Quality"
+      echo ""
+      # Look up the CodeQL check run ID so we can link directly to it
+      CODEQL_CHECK_ID=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" \
+        --jq '.jobs[] | select(.name | test("codeql"; "i")) | .id' 2>/dev/null | head -1 || true)
+      CODEQL_CHECK_URL=""
+      if [[ -n "$CODEQL_CHECK_ID" ]]; then
+        CODEQL_CHECK_URL="https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}/checks?check_run_id=${CODEQL_CHECK_ID}"
+      fi
+      if [[ "$CODEQL_RESULT" == "success" ]]; then
+        if [[ -n "$CODEQL_CHECK_URL" ]]; then
+          echo "- ✅ **[CodeQL security scan passed](${CODEQL_CHECK_URL})**"
+        else
+          echo "- ✅ **CodeQL security scan passed**"
+        fi
+      else
+        if [[ -n "$CODEQL_CHECK_URL" ]]; then
+          echo "- ❌ **CodeQL security scan failed** — see [run details](${CODEQL_CHECK_URL}) or the [Security tab](https://github.com/${GITHUB_REPOSITORY}/security/code-scanning) for details"
+        else
+          echo "- ❌ **CodeQL security scan failed** — see the [Security tab](https://github.com/${GITHUB_REPOSITORY}/security/code-scanning) for details"
+        fi
+      fi
+    fi
   fi
 } > pr_comment.txt
 
