@@ -125,6 +125,6 @@ done
   echo ""
   echo '  ]'
   echo '}'
-} | jq '.' > manifest.json
+} | jq --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" '{generated_at: $ts} + .' > manifest.json
 
 echo "Generated manifest.json with ${#root_entries[@]} plugin(s)."
