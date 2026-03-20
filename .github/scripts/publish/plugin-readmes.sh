@@ -23,7 +23,7 @@ for plugin_dir in plugins/*/; do
   owner=$(jq -r '.owner' "$plugin_file")
   repo_url=$(jq -r '.repo_url // empty' "$plugin_file")
   discord_thread=$(jq -r '.discord_thread // empty' "$plugin_file")
-  license=$(jq -r '.license // ""' "$plugin_file")
+  license=$(jq -r '.license // "AGPL-3.0"' "$plugin_file")
   has_readme=false
   [[ -f "$plugin_dir/README.md" ]] && has_readme=true
 

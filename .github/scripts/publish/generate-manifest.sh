@@ -64,6 +64,7 @@ for plugin_dir in plugins/*/; do
       latest_url: $latest_url,
       versions: $versioned_zips
     } + (if $icon_url != "" then {icon_url: $icon_url} else {} end)
+      + {license: (if .license? and .license != "" and .license != null then .license else "AGPL-3.0" end)}
       + (
       if ($latest_metadata | length > 0) then {
         last_updated: $latest_metadata.last_updated,
@@ -100,7 +101,7 @@ for plugin_dir in plugins/*/; do
     --arg icon_url "$icon_url" \
     --arg manifest_url "$plugin_manifest_url" \
     --arg author "$(jq -r '.owner // ""' "$plugin_file")" \
-    --arg license "$(jq -r '.license // ""' "$plugin_file")" \
+    --arg license "$(jq -r '.license // "AGPL-3.0"' "$plugin_file")" \
     --arg latest_url "$latest_url" \
     '{
       name: $name,
@@ -108,7 +109,7 @@ for plugin_dir in plugins/*/; do
       icon_url: (if $icon_url != "" then $icon_url else null end),
       manifest_url: $manifest_url,
       author: $author,
-      license: (if $license != "" then $license else null end),
+      license: $license,
       latest_version: ($latest_metadata.version // null),
       latest_md5: ($latest_metadata.checksum_md5 // null),
       latest_url: $latest_url,
