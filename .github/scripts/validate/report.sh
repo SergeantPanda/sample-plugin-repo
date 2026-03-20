@@ -171,14 +171,15 @@ done
   fi
 } > pr_comment.txt
 
-# Post PR comment
+# Post PR comment — script succeeds/fails based on whether the comment posted
 gh pr comment "$PR_NUMBER" --body "$(cat pr_comment.txt)"
+COMMENT_EXIT=$?
 
 # Close PR for unauthorized plugin modifications
 if [[ "$CLOSE_PR" == "true" && "${CLOSE_REASON:-}" == "unauthorized" ]]; then
   gh pr close "$PR_NUMBER"
   echo "PR #$PR_NUMBER closed: unauthorized"
-  exit 0
+  exit $COMMENT_EXIT
 fi
 
-exit $OVERALL_FAILED
+exit $COMMENT_EXIT
