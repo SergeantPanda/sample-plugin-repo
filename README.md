@@ -19,7 +19,7 @@ This branch contains all published plugin releases.
 
 ### Cool Test Plugin
 
-**Version:** `0.1.0` | **Owner:** sethwv-alt | **Last Updated:** 2026-03-20T09:43:12-04:00
+**Version:** `0.1.0` | **Owner:** sethwv-alt | **Last Updated:** Mar 20 2026, 13:43 UTC
 
 A cool description
 
@@ -33,7 +33,7 @@ A cool description
 
 ### [old-proof-of-concept](https://github.com/sethwv/sample-plugin-repo/blob/main/plugins/old-proof-of-concept/README.md)
 
-**Version:** `0.1.0` | **Owner:** sethwv | **Last Updated:** 2026-03-20T09:58:38-04:00
+**Version:** `0.1.0` | **Owner:** sethwv | **Last Updated:** Mar 20 2026, 13:58 UTC
 
 A cool description
 
@@ -55,4 +55,4 @@ curl https://raw.githubusercontent.com/sethwv/sample-plugin-repo/releases/manife
 
 ---
 
-*Last updated: 2026-03-20 13:58:56 UTC*
+*Last updated: Mar 20 2026, 14:35 UTC*
