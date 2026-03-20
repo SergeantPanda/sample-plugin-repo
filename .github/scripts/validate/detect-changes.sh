@@ -42,18 +42,9 @@ MERGE_BASE=$(git merge-base "origin/${BASE_REF}" HEAD)
 
 # --- Protection check: only plugins/ may be modified by non-maintainers ---
 OUTSIDE_CHANGES=$(git diff --name-only "$MERGE_BASE" HEAD | grep -v '^plugins/' || true)
-if [[ -n "$OUTSIDE_CHANGES" ]]; then
-  if [[ "$(has_write_access "$PR_AUTHOR")" -ne 1 ]]; then
-    echo "## Modification outside plugins/ denied" >&2
-    echo "" >&2
-    echo "This PR modifies files outside of \`plugins/\`, which requires admin, maintain, or write access to the repository." >&2
-    echo "" >&2
-    echo "**Modified files:**" >&2
-    echo "\`\`\`" >&2
-    echo "$OUTSIDE_CHANGES" >&2
-    echo "\`\`\`" >&2
-    exit 1
-  fi
+HAS_OUTSIDE_VIOLATION=0
+if [[ -n "$OUTSIDE_CHANGES" ]] && [[ "$(has_write_access "$PR_AUTHOR")" -ne 1 ]]; then
+  HAS_OUTSIDE_VIOLATION=1
 fi
 
 # --- Detect modified plugins ---
@@ -61,6 +52,19 @@ PLUGIN_LIST=$(git diff --name-only "$MERGE_BASE" HEAD \
   | grep '^plugins/' | cut -d '/' -f2 | sort -u)
 
 if [[ -z "$PLUGIN_LIST" ]]; then
+  if [[ $HAS_OUTSIDE_VIOLATION -eq 1 ]]; then
+    # Only outside-plugins changes — surface the error via report job
+    echo "matrix=[]"      >> "$GITHUB_OUTPUT"
+    echo "plugin_count=0" >> "$GITHUB_OUTPUT"
+    echo "close_pr=false" >> "$GITHUB_OUTPUT"
+    echo "close_reason=" >> "$GITHUB_OUTPUT"
+    {
+      echo "outside_files<<OUTSIDE_EOF"
+      echo "$OUTSIDE_CHANGES"
+      echo "OUTSIDE_EOF"
+    } >> "$GITHUB_OUTPUT"
+    exit 0
+  fi
   echo "::error::No plugin changes detected in this PR."
   exit 1
 fi
@@ -137,6 +141,13 @@ if [[ "$CLOSE_PR" == "true" ]]; then
   echo "close_reason=unauthorized" >> "$GITHUB_OUTPUT"
 else
   echo "close_reason=" >> "$GITHUB_OUTPUT"
+fi
+if [[ $HAS_OUTSIDE_VIOLATION -eq 1 ]]; then
+  {
+    echo "outside_files<<OUTSIDE_EOF"
+    echo "$OUTSIDE_CHANGES"
+    echo "OUTSIDE_EOF"
+  } >> "$GITHUB_OUTPUT"
 fi
 
 echo "Detected $PLUGIN_COUNT plugin(s): $PLUGIN_LIST"

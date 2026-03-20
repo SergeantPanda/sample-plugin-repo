@@ -108,6 +108,27 @@ done
   else
     echo "$COMBINED_BODY"
 
+    if [[ -n "${OUTSIDE_FILES:-}" ]]; then
+      OVERALL_FAILED=1
+      echo "---"
+      echo ""
+      echo "## ⚠️ Unauthorized File Modification"
+      echo ""
+      echo "This PR modifies files outside of \`plugins/\`, which requires write access to the repository. These changes will block merging."
+      echo ""
+      echo "**Modified files:**"
+      echo "\`\`\`"
+      echo "${OUTSIDE_FILES}"
+      echo "\`\`\`"
+      echo ""
+      echo "Please remove these changes and resubmit with only modifications inside \`plugins/\`."
+      if [[ -n "${DISCORD_URL:-}" ]]; then
+        echo ""
+        echo "For help: [Dispatcharr Discord]($DISCORD_URL)"
+      fi
+      echo ""
+    fi
+
     echo "---"
     echo ""
     if [[ $OVERALL_FAILED -eq 0 ]]; then
@@ -158,7 +179,7 @@ else
   gh pr comment "$PR_NUMBER" --body "$(cat pr_comment.txt)"
 fi
 
-# Close if unauthorized (not for other close reasons)
+# Close PR for unauthorized plugin modifications
 if [[ "$CLOSE_PR" == "true" && "${CLOSE_REASON:-}" == "unauthorized" ]]; then
   gh pr close "$PR_NUMBER"
   echo "PR #$PR_NUMBER closed: unauthorized"

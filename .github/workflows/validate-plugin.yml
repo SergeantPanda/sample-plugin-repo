@@ -53,6 +53,7 @@ jobs:
       plugin_count: ${{ steps.detect.outputs.plugin_count }}
       close_pr: ${{ steps.detect.outputs.close_pr }}
       close_reason: ${{ steps.detect.outputs.close_reason }}
+      outside_files: ${{ steps.detect.outputs.outside_files }}
     steps:
       - name: Checkout base branch scripts (trusted)
         uses: actions/checkout@v4
@@ -129,19 +130,27 @@ jobs:
           category: /language:python
           ref: refs/pull/${{ github.event.pull_request.number }}/head
           sha: ${{ github.event.pull_request.head.sha }}
+          output: sarif-results
         continue-on-error: true
 
       - name: Set CodeQL status output
         id: status
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          # Count all open CodeQL alerts for this PR (any severity)
-          ALERT_COUNT=$(gh api \
-            "repos/$GITHUB_REPOSITORY/code-scanning/alerts?pr_number=${{ github.event.pull_request.number }}&state=open&tool_name=CodeQL&per_page=1" \
-            --jq 'length' 2>/dev/null || echo "0")
-          if [[ "$ALERT_COUNT" -gt 0 || "${{ steps.analyze.outcome }}" != "success" ]]; then
+          # Count results directly from the SARIF output files — no async API dependency
+          RESULT_COUNT=0
+          if [[ -d "sarif-results" ]]; then
+            for f in sarif-results/*.sarif sarif-results/*.sarif.gz; do
+              [[ -f "$f" ]] || continue
+              if [[ "$f" == *.gz ]]; then
+                COUNT=$(gunzip -c "$f" | jq '[.runs[].results | length] | add // 0')
+              else
+                COUNT=$(jq '[.runs[].results | length] | add // 0' "$f")
+              fi
+              RESULT_COUNT=$((RESULT_COUNT + COUNT))
+            done
+          fi
+          echo "Found $RESULT_COUNT CodeQL result(s)"
+          if [[ "$RESULT_COUNT" -gt 0 || "${{ steps.analyze.outcome }}" != "success" ]]; then
             echo "codeql_status=failure" >> "$GITHUB_OUTPUT"
           else
             echo "codeql_status=success" >> "$GITHUB_OUTPUT"
@@ -252,6 +261,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           DISCORD_URL: ${{ vars.DISCORD_URL }}
           CODEQL_RESULT: ${{ needs.codeql-analyze.outputs.codeql_status }}
+          OUTSIDE_FILES: ${{ needs.detect-changes.outputs.outside_files }}
         run: |
           chmod +x .github/scripts/validate/*.sh
           set +e
