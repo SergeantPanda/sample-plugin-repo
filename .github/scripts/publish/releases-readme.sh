@@ -29,6 +29,7 @@ render_plugin() {
   local zip_url="https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${plugin_name}-latest.zip"
   local source_url="https://github.com/${GITHUB_REPOSITORY}/tree/$SOURCE_BRANCH/plugins/${plugin_name}"
   local readme_url="https://github.com/${GITHUB_REPOSITORY}/blob/$SOURCE_BRANCH/plugins/${plugin_name}/README.md"
+  local releases_readme_url="https://github.com/${GITHUB_REPOSITORY}/blob/$RELEASES_BRANCH/releases/${plugin_name}/README.md"
   local commit_url="https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha}"
   local releases_dir="./releases/${plugin_name}"
   local has_source_readme=false
@@ -37,11 +38,7 @@ render_plugin() {
   local suffix=""
   [[ "$is_deprecated" == "true" ]] && suffix=" (deprecated)"
 
-  if [[ "$has_source_readme" == "true" ]]; then
-    echo "### [$name]($readme_url)$suffix"
-  else
-    echo "### $name$suffix"
-  fi
+  echo "### [$name]($releases_readme_url)$suffix"
   echo ""
   echo "**Version:** \`$version\` | **Owner:** $owner | **Last Updated:** $(fmt_date "$last_updated")"
   echo ""

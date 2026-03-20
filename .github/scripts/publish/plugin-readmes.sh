@@ -29,11 +29,7 @@ for plugin_dir in plugins/*/; do
   {
     echo "[Back to All Plugins](../../)"
     echo ""
-    if [[ "$has_readme" == "true" ]]; then
-      echo "# [$name](https://github.com/${GITHUB_REPOSITORY}/blob/$SOURCE_BRANCH/plugins/${plugin_name}/README.md)"
-    else
-      echo "# $name"
-    fi
+    echo "# $name"
     echo ""
     echo "$description"
     echo ""
@@ -116,6 +112,15 @@ for plugin_dir in plugins/*/; do
     echo "**Source:** [Browse Plugin](https://github.com/${GITHUB_REPOSITORY}/tree/$SOURCE_BRANCH/plugins/${plugin_name})"
     echo ""
     echo "**Metadata:** [View full metadata](../../metadata/${plugin_name}/manifest.json)"
+
+    if [[ "$has_readme" == "true" ]]; then
+      echo ""
+      echo "---"
+      echo ""
+      echo "## Plugin README"
+      echo ""
+      cat "$plugin_dir/README.md"
+    fi
   } > "releases/$plugin_name/README.md"
 
   echo "  $plugin_name"
