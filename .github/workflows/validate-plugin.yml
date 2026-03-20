@@ -136,17 +136,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          # Check for open error/critical-severity code scanning alerts on this commit
+          # Count all open CodeQL alerts for this PR ref (any severity)
           ALERT_COUNT=$(gh api \
-            "repos/$GITHUB_REPOSITORY/code-scanning/alerts?ref=refs/pull/${{ github.event.pull_request.number }}/head&state=open&severity=error&per_page=1" \
+            "repos/$GITHUB_REPOSITORY/code-scanning/alerts?ref=refs/pull/${{ github.event.pull_request.number }}/head&state=open&tool_name=CodeQL&per_page=1" \
             --jq 'length' 2>/dev/null || echo "0")
-          # Also check critical severity
-          CRITICAL_COUNT=$(gh api \
-            "repos/$GITHUB_REPOSITORY/code-scanning/alerts?ref=refs/pull/${{ github.event.pull_request.number }}/head&state=open&severity=critical&per_page=1" \
-            --jq 'length' 2>/dev/null || echo "0")
-          if [[ "$ALERT_COUNT" -gt 0 || "$CRITICAL_COUNT" -gt 0 || "${{ steps.analyze.outcome }}" != "success" ]]; then
+          if [[ "$ALERT_COUNT" -gt 0 || "${{ steps.analyze.outcome }}" != "success" ]]; then
             echo "codeql_status=failure" >> "$GITHUB_OUTPUT"
           else
             echo "codeql_status=success" >> "$GITHUB_OUTPUT"
