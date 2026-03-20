@@ -1,5 +1,7 @@
 # Dispatcharr Plugin Repository
 
+> **This is a listing and distribution repository.** Plugin development, testing, and pre-releases should happen in your own repository. Submit a PR here only when your plugin is ready for public distribution.
+
 A repository for publishing and distributing Dispatcharr Python plugins with automated validation and release management.
 
 ## Quick Links
@@ -41,49 +43,7 @@ On merge to `main`, each plugin is:
 
 ## Contributing
 
-### Adding or Updating a Plugin
-
-This repository is for publishing plugins to the official Dispatcharr plugin manifest. Development and testing should happen in your own repository first. Once your plugin is stable, submit a PR here to publish it.
-
-1. Fork the repository and create a branch
-2. Create or modify your plugin folder under `plugins/your-plugin-name/`
-3. Submit a pull request to `main`
-
-For updates, increment the version in `plugin.json`.
-
-### `plugin.json` Required Fields
-
-```json
-{
-  "name": "My Plugin",
-  "version": "1.0.0",
-  "description": "A brief description of what the plugin does",
-  "owner": "github-username",
-  "license": "MIT"
-}
-```
-
-- `name`, `version`, `description`, `license` are required
-- At least one of `owner` or `maintainers` must include your GitHub username - these are not part of the Dispatcharr spec but are required by this repository to manage who can submit PRs for each plugin
-- Plugin folder names must be lowercase-kebab-case
-- `license` must be a valid [OSI-approved SPDX identifier](https://spdx.org/licenses/) (e.g. `MIT`, `Apache-2.0`, `GPL-3.0-only`)
-
-**Optional fields:**
-- `maintainers` - Array of additional GitHub usernames who can submit PRs for this plugin
-- `min_dispatcharr_version` - Minimum Dispatcharr version required (e.g. `v0.19.0` or `0.19.0`)
-- `max_dispatcharr_version` - Maximum Dispatcharr version supported (e.g. `v1.2.0` or `1.2.0`). Must be ≥ `min_dispatcharr_version` if both are set.
-- `repo_url` - URL to the plugin's source repository
-- `discord_thread` - URL or ID of the associated Discord thread
-- `deprecated` - Marks plugin as deprecated (default: `false`)
-- `unlisted` - Hides plugin from the releases README (default: `false`)
-
-## Licensing
-
-Plugins must be distributed under an [OSI-approved open source license](https://opensource.org/licenses). The `license` field in `plugin.json` is required and must be a valid [SPDX identifier](https://spdx.org/licenses/) (e.g. `"license": "MIT"`).
-
-## Versioning
-
-Plugins use semantic versioning (`MAJOR.MINOR.PATCH`). Version increments are enforced by the validation workflow.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, including the `plugin.json` spec, validation rules, and what happens after merge.
 
 ## Downloading Plugins
 
