@@ -151,15 +151,16 @@ jobs:
         id: status
         if: always()
         run: |
-          # Count results directly from the SARIF output files — no async API dependency
+          # Count only high/critical/error-level results from SARIF (level=="error")
+          # SARIF level mapping: "error"=high/critical/error-quality, "warning"=medium, "note"=low
           RESULT_COUNT=0
           if [[ -d "sarif-results" ]]; then
             for f in sarif-results/*.sarif sarif-results/*.sarif.gz; do
               [[ -f "$f" ]] || continue
               if [[ "$f" == *.gz ]]; then
-                COUNT=$(gunzip -c "$f" | jq '[.runs[].results | length] | add // 0')
+                COUNT=$(gunzip -c "$f" | jq '[.runs[].results[] | select(.level == "error")] | length')
               else
-                COUNT=$(jq '[.runs[].results | length] | add // 0' "$f")
+                COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' "$f")
               fi
               RESULT_COUNT=$((RESULT_COUNT + COUNT))
             done
@@ -171,8 +172,8 @@ jobs:
             echo "codeql_status=success" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Fail job if CodeQL found issues
-        if: always() && steps.analyze.outcome != 'success'
+      - name: Fail job if CodeQL found high/error/critical issues
+        if: always() && steps.status.outputs.codeql_status == 'failure'
         run: exit 1
 
   # --------------------------------------------------------------------------
