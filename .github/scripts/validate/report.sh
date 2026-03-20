@@ -140,20 +140,8 @@ done
       if [[ "$CODEQL_RESULT" == "success" ]]; then
         echo "- ✅ **CodeQL security scan passed**"
       else
-        # Look up the CodeQL code-scanning check run (different from the Actions job ID)
-        HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid --jq '.headRefOid' 2>/dev/null || true)
-        CODEQL_CHECK_ID=""
-        if [[ -n "$HEAD_SHA" ]]; then
-          CODEQL_CHECK_ID=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/check-runs" \
-            --jq '.check_runs[] | select(.app.slug == "github-code-scanning") | .id' \
-            2>/dev/null | head -1 || true)
-        fi
-        if [[ -n "$CODEQL_CHECK_ID" ]]; then
-          CODEQL_CHECK_URL="https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}/checks?check_run_id=${CODEQL_CHECK_ID}"
-          echo "- ❌ **CodeQL security scan failed** — see [run details](${CODEQL_CHECK_URL}) or the [Security tab](https://github.com/${GITHUB_REPOSITORY}/security/code-scanning) for details"
-        else
-          echo "- ❌ **CodeQL security scan failed** — see the [Security tab](https://github.com/${GITHUB_REPOSITORY}/security/code-scanning) for details"
-        fi
+        CODEQL_SCAN_URL="https://github.com/${GITHUB_REPOSITORY}/security/code-scanning?query=is%3Aopen+pr%3A${PR_NUMBER}"
+        echo "- ❌ **CodeQL security scan failed** — see [security findings](${CODEQL_SCAN_URL}) for details"
       fi
     fi
   fi

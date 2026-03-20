@@ -137,9 +137,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          # Count all open CodeQL alerts for this PR ref (any severity)
+          # Count all open CodeQL alerts for this PR (any severity)
           ALERT_COUNT=$(gh api \
-            "repos/$GITHUB_REPOSITORY/code-scanning/alerts?ref=refs/pull/${{ github.event.pull_request.number }}/head&state=open&tool_name=CodeQL&per_page=1" \
+            "repos/$GITHUB_REPOSITORY/code-scanning/alerts?pr_number=${{ github.event.pull_request.number }}&state=open&tool_name=CodeQL&per_page=1" \
             --jq 'length' 2>/dev/null || echo "0")
           if [[ "$ALERT_COUNT" -gt 0 || "${{ steps.analyze.outcome }}" != "success" ]]; then
             echo "codeql_status=failure" >> "$GITHUB_OUTPUT"
