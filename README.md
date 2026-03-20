@@ -69,6 +69,7 @@ For updates, increment the version in `plugin.json`.
 **Optional fields:**
 - `maintainers` - Array of additional GitHub usernames who can submit PRs for this plugin
 - `min_dispatcharr_version` - Minimum Dispatcharr version required (e.g. `v0.19.0` or `0.19.0`)
+- `max_dispatcharr_version` - Maximum Dispatcharr version supported (e.g. `v1.2.0` or `1.2.0`). Must be ≥ `min_dispatcharr_version` if both are set.
 - `repo_url` - URL to the plugin's source repository
 - `discord_thread` - URL or ID of the associated Discord thread
 - `deprecated` - Marks plugin as deprecated (default: `false`)

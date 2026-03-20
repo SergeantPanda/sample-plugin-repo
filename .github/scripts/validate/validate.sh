@@ -191,6 +191,26 @@ has_permission="false"
     fi
   fi
 
+  # max_dispatcharr_version (optional)
+  MAX_DA_VERSION=$(jq -r '.max_dispatcharr_version // ""' "$PLUGIN_JSON")
+  if [[ -n "$MAX_DA_VERSION" ]]; then
+    if [[ $(validate_dispatcharr_version "$MAX_DA_VERSION") -eq 1 ]]; then
+      echo "- ✅ Maximum Dispatcharr version valid (\`$MAX_DA_VERSION\`)"
+    else
+      echo "- ❌ \`max_dispatcharr_version\` must be semver (got \`$MAX_DA_VERSION\`, expected X.Y.Z or vX.Y.Z)"
+      failed=1
+    fi
+    # Sanity check: max must be >= min if both are set
+    if [[ -n "$MIN_DA_VERSION" && $(validate_dispatcharr_version "$MAX_DA_VERSION") -eq 1 && $(validate_dispatcharr_version "$MIN_DA_VERSION") -eq 1 ]]; then
+      _max="${MAX_DA_VERSION#v}"
+      _min="${MIN_DA_VERSION#v}"
+      if ! version_greater_than "$_max" "$_min" && [[ "$_max" != "$_min" ]]; then
+        echo "- ❌ \`max_dispatcharr_version\` (\`$MAX_DA_VERSION\`) must be greater than or equal to \`min_dispatcharr_version\` (\`$MIN_DA_VERSION\`)"
+        failed=1
+      fi
+    fi
+  fi
+
   # URL fields (optional)
   REPO_URL=$(jq -r '.repo_url // ""' "$PLUGIN_JSON")
   DISCORD_THREAD=$(jq -r '.discord_thread // ""' "$PLUGIN_JSON")
