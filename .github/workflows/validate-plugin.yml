@@ -208,7 +208,7 @@ jobs:
   # Job 4: Validate each plugin in parallel via matrix
   # --------------------------------------------------------------------------
   validate-plugin:
-    needs: [detect-changes, codeql-analyze]
+    needs: [detect-changes]
     if: needs.detect-changes.outputs.close_pr == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 10
