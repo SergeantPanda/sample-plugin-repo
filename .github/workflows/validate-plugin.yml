@@ -52,14 +52,26 @@ jobs:
       plugin_count: ${{ steps.detect.outputs.plugin_count }}
       close_pr: ${{ steps.detect.outputs.close_pr }}
     steps:
-      - name: Checkout PR with full history
+      - name: Checkout base branch scripts (trusted)
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
 
       - name: Fetch base branch
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Checkout PR plugins (untrusted content only)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: plugins
+          sparse-checkout-cone-mode: false
+          clean: false
 
       - name: Detect changed plugins
         id: detect
@@ -85,14 +97,26 @@ jobs:
       matrix:
         plugin: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     steps:
-      - name: Checkout PR with full history
+      - name: Checkout base branch scripts (trusted)
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
 
       - name: Fetch base branch
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Checkout PR plugins (untrusted content only)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: plugins
+          sparse-checkout-cone-mode: false
+          clean: false
 
       - name: Validate ${{ matrix.plugin }}
         id: validate

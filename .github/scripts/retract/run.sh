@@ -23,6 +23,17 @@ if [[ -z "$PLUGIN_NAME" ]]; then
   exit 1
 fi
 
+# Input validation — prevent path traversal and shell injection
+if [[ ! "$PLUGIN_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+  echo "Error: plugin_name must be lowercase-kebab-case (got '${PLUGIN_NAME}')"
+  exit 1
+fi
+
+if [[ -n "$VERSION" && ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "Error: version must be semver X.Y.Z (got '${VERSION}')"
+  exit 1
+fi
+
 RELEASES_BRANCH="releases"
 
 echo "Retracting plugin: $PLUGIN_NAME${VERSION:+ v$VERSION}"

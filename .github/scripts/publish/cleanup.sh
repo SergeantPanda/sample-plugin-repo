@@ -32,14 +32,13 @@ for plugin_dir in plugins/*/; do
   metadata_dir="metadata/$plugin_name"
 
   # Remove oldest ZIPs beyond the limit
-  old_zips=$(ls -1t "$zip_dir/${plugin_name}-"*.zip 2>/dev/null \
-    | grep -v "${plugin_name}-latest.zip" \
-    | awk "NR>$MAX_VERSIONED_ZIPS")
-  for old_zip in $old_zips; do
+  while IFS= read -r old_zip; do
     version=$(basename "$old_zip" | sed "s/${plugin_name}-\(.*\)\.zip/\1/")
     rm -f "$old_zip" "$metadata_dir/${plugin_name}-${version}.json"
     echo "  Removed $plugin_name v$version (over limit)"
-  done
+  done < <(ls -1t "$zip_dir/${plugin_name}-"*.zip 2>/dev/null \
+    | grep -v "${plugin_name}-latest.zip" \
+    | awk "NR>$MAX_VERSIONED_ZIPS")
 
   # Remove orphaned ZIPs with no matching metadata
   for zipfile in "$zip_dir/${plugin_name}-"*.zip; do

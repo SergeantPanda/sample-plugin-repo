@@ -9,6 +9,9 @@ set -e
 
 : "${SOURCE_BRANCH:?}" "${RELEASES_BRANCH:?}" "${GITHUB_REPOSITORY:?}"
 
+# Format an ISO8601 timestamp as "Mon DD, HH:MM UTC"
+fmt_date() { date -d "$1" -u +"%b %d %Y, %H:%M UTC" 2>/dev/null || echo "$1"; }
+
 for plugin_dir in plugins/*/; do
   [[ ! -d "$plugin_dir" ]] && continue
   plugin_name=$(basename "$plugin_dir")
@@ -69,7 +72,7 @@ for plugin_dir in plugins/*/; do
           checksum_sha256=$(jq -r '.checksum_sha256' "$metadata_file")
 
           echo "- **Download:** [\`${plugin_name}-latest.zip\`](https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${plugin_name}-latest.zip)"
-          echo "- **Built:** $build_timestamp"
+          echo "- **Built:** $(fmt_date "$build_timestamp")"
           echo "- **Source Commit:** [\`$commit_sha_short\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha})"
           echo ""
           echo "**Checksums:**"
@@ -89,8 +92,7 @@ for plugin_dir in plugins/*/; do
     echo "| Version | Download | Built | Commit | MD5 Checksum |"
     echo "|---------|----------|-------|--------|--------------|"
 
-    for zipfile in $(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null \
-        | grep -v latest | sort -t- -k2 -V -r); do
+    while IFS= read -r zipfile; do
       zip_basename=$(basename "$zipfile")
       version=$(echo "$zip_basename" | sed "s/${plugin_name}-\(.*\)\.zip/\1/")
       metadata_file="metadata/$plugin_name/${plugin_name}-${version}.json"
@@ -100,12 +102,13 @@ for plugin_dir in plugins/*/; do
         commit_sha=$(jq -r '.commit_sha' "$metadata_file")
         build_timestamp=$(jq -r '.build_timestamp' "$metadata_file")
         checksum_md5=$(jq -r '.checksum_md5' "$metadata_file")
-        build_date=$(echo "$build_timestamp" | cut -d'T' -f1)
+        build_date=$(fmt_date "$build_timestamp")
         echo "| \`$version\` | [Download](https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${zip_basename}) | $build_date | [\`$commit_sha_short\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit_sha}) | \`$checksum_md5\` |"
       else
         echo "| \`$version\` | [Download](https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${zip_basename}) | - | - | - |"
       fi
-    done
+    done < <(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null \
+        | grep -v latest | sort -t- -k2 -V -r)
 
     echo ""
     echo "---"

@@ -23,8 +23,7 @@ for plugin_dir in plugins/*/; do
   versioned_zips="[]"
   latest_metadata="{}"
 
-  for zipfile in $(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null \
-      | grep -v latest | sort -t- -k2 -V -r); do
+  while IFS= read -r zipfile; do
     zip_basename=$(basename "$zipfile")
     zip_version=$(echo "$zip_basename" | sed "s/${plugin_name}-\(.*\)\.zip/\1/")
     zip_url="https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${zip_basename}"
@@ -41,7 +40,8 @@ for plugin_dir in plugins/*/; do
       versioned_zips=$(jq --arg version "$zip_version" --arg url "$zip_url" \
         '. + [{version: $version, url: $url}]' <<< "$versioned_zips")
     fi
-  done
+  done < <(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null \
+      | grep -v latest | sort -t- -k2 -V -r)
 
   plugin_entry=$(jq \
     --arg plugin_name "$plugin_name" \

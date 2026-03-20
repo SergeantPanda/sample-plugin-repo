@@ -9,6 +9,9 @@ set -e
 
 : "${SOURCE_BRANCH:?}" "${RELEASES_BRANCH:?}" "${GITHUB_REPOSITORY:?}"
 
+# Format an ISO8601 timestamp as "Mon DD, HH:MM UTC"
+fmt_date() { date -d "$1" -u +"%b %d %Y, %H:%M UTC" 2>/dev/null || echo "$1"; }
+
 # Render a full plugin block (used in second pass)
 render_plugin() {
   local is_deprecated=$1
@@ -40,7 +43,7 @@ render_plugin() {
     echo "### $name$suffix"
   fi
   echo ""
-  echo "**Version:** \`$version\` | **Owner:** $owner | **Last Updated:** $last_updated"
+  echo "**Version:** \`$version\` | **Owner:** $owner | **Last Updated:** $(fmt_date "$last_updated")"
   echo ""
   echo "$description"
   echo ""
@@ -78,7 +81,7 @@ render_plugin() {
 
   # Table rows: active plugins first, then deprecated
   for pass in active deprecated; do
-    for plugin_dir in $(ls -d plugins/*/ | sort); do
+    for plugin_dir in plugins/*/; do
       plugin_file="$plugin_dir/plugin.json"
       [[ ! -f "$plugin_file" ]] && continue
       deprecated=$(jq -r '.deprecated // false' "$plugin_file")
@@ -105,7 +108,7 @@ render_plugin() {
   echo ""
 
   # Detailed sections: active plugins
-  for plugin_dir in $(ls -d plugins/*/ | sort); do
+  for plugin_dir in plugins/*/; do
     plugin_file="$plugin_dir/plugin.json"
     [[ ! -f "$plugin_file" ]] && continue
     deprecated=$(jq -r '.deprecated // false' "$plugin_file")
@@ -148,7 +151,7 @@ render_plugin() {
     echo "These plugins are deprecated and may be removed in the future."
     echo ""
 
-    for plugin_dir in $(ls -d plugins/*/ | sort); do
+    for plugin_dir in plugins/*/; do
       plugin_file="$plugin_dir/plugin.json"
       [[ ! -f "$plugin_file" ]] && continue
       deprecated=$(jq -r '.deprecated // false' "$plugin_file")
@@ -184,5 +187,5 @@ render_plugin() {
   echo ""
   echo "---"
   echo ""
-  echo "*Last updated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")*"
+  echo "*Last updated: $(date -u +"%b %d %Y, %H:%M UTC")*"
 } > README.md

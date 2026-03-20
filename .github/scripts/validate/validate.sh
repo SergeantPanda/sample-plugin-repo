@@ -183,6 +183,26 @@ has_permission="false"
     fi
   fi
 
+  # URL fields (optional)
+  REPO_URL=$(jq -r '.repo_url // ""' "$PLUGIN_JSON")
+  DISCORD_THREAD=$(jq -r '.discord_thread // ""' "$PLUGIN_JSON")
+  if [[ -n "$REPO_URL" ]]; then
+    if [[ "$REPO_URL" =~ ^https?:// ]]; then
+      echo "- ✅ \`repo_url\` valid"
+    else
+      echo "- ❌ \`repo_url\` must start with \`http://\` or \`https://\` (got \`$REPO_URL\`)"
+      failed=1
+    fi
+  fi
+  if [[ -n "$DISCORD_THREAD" ]]; then
+    if [[ "$DISCORD_THREAD" =~ ^https?:// ]]; then
+      echo "- ✅ \`discord_thread\` valid"
+    else
+      echo "- ❌ \`discord_thread\` must start with \`http://\` or \`https://\` (got \`$DISCORD_THREAD\`)"
+      failed=1
+    fi
+  fi
+
   # Version bump check
   if git show "origin/${BASE_REF}:${PLUGIN_JSON}" > /dev/null 2>&1; then
     OLD_VERSION=$(git show "origin/${BASE_REF}:${PLUGIN_JSON}" | jq -r '.version')
