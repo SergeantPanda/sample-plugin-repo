@@ -102,9 +102,7 @@ has_permission="false"
   echo "- ✅ plugin.json exists"
 
   # README (optional)
-  if [[ ! -f "$README" ]]; then
-    # echo "- ℹ️ README.md not provided (optional)"
-  else
+  if [[ -f "$README" ]]; then
     echo "- ✅ README.md exists"
   fi
 
