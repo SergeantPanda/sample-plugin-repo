@@ -97,7 +97,7 @@ has_permission="false"
     echo "result=fail" >> "$GITHUB_OUTPUT"
     echo "is_new=false" >> "$GITHUB_OUTPUT"
     echo "has_permission=false" >> "$GITHUB_OUTPUT"
-    exit 0  # non-fatal to matrix — report fragment is written
+    exit 0  # non-fatal to matrix - report fragment is written
   fi
   echo "- ✅ plugin.json exists"
 
@@ -140,7 +140,7 @@ has_permission="false"
     failed=1
   fi
 
-  # Permission check — use base branch version to prevent self-granting via the PR
+  # Permission check - use base branch version to prevent self-granting via the PR
   IS_REPO_MAINTAINER=$(check_repo_maintainer "$PR_AUTHOR")
   if [[ "$IS_REPO_MAINTAINER" -eq 1 ]]; then
     echo "- ✅ Permission check passed"
@@ -157,7 +157,7 @@ has_permission="false"
       failed=1
     fi
   else
-    # New plugin — no base version to check against.
+    # New plugin - no base version to check against.
     # The PR author must include themselves in owner or maintainers so future
     # PRs can be authorized. This is a correctable validation error, not a closure.
     if [[ "$PR_AUTHOR" == "$OWNER" ]] || [[ " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
@@ -227,6 +227,25 @@ has_permission="false"
       echo "- ❌ \`discord_thread\` must start with \`http://\` or \`https://\` (got \`$DISCORD_THREAD\`)"
       failed=1
     fi
+  fi
+
+  # License (optional): omit, or a valid OSI-approved SPDX identifier
+  LICENSE_ID=$(jq -r '.license // ""' "$PLUGIN_JSON")
+  if [[ -n "$LICENSE_ID" ]]; then
+    SPDX_JSON=$(curl -fsSL "https://raw.githubusercontent.com/spdx/license-list-data/main/json/licenses.json" 2>/dev/null || echo "")
+    if [[ -z "$SPDX_JSON" ]]; then
+      echo "- ⚠️ Could not fetch SPDX license list - skipping license ID validation"
+    else
+      SPDX_VALID=$(echo "$SPDX_JSON" | jq --arg lid "$LICENSE_ID" '[.licenses[] | select(.isOsiApproved == true) | .licenseId] | any(. == $lid)')
+      if [[ "$SPDX_VALID" == "true" ]]; then
+        echo "- ✅ License valid (\`$LICENSE_ID\`)"
+      else
+        echo "- ❌ \`$LICENSE_ID\` is not a valid OSI-approved SPDX License Identifier - plugins must be distributed under an open source license. See https://spdx.org/licenses/ (filter: OSI Approved)"
+        failed=1
+      fi
+    fi
+  else
+    echo "- ⚠️ No \`license\` field provided - by submitting this plugin without a license, you agree to distribute it under the repository's [AGPL-3.0](https://spdx.org/licenses/AGPL-3.0-only.html) license. Add a \`license\` field to specify a different OSI-approved license."
   fi
 
   # Version bump check

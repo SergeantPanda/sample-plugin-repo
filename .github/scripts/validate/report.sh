@@ -184,7 +184,7 @@ done
   fi
 } > pr_comment.txt
 
-# Post PR comment — script succeeds/fails based on whether the comment posted
+# Post PR comment - script succeeds/fails based on whether the comment posted
 gh pr comment "$PR_NUMBER" --body "$(cat pr_comment.txt)"
 COMMENT_EXIT=$?
 

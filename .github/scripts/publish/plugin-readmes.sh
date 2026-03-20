@@ -23,6 +23,7 @@ for plugin_dir in plugins/*/; do
   owner=$(jq -r '.owner' "$plugin_file")
   repo_url=$(jq -r '.repo_url // empty' "$plugin_file")
   discord_thread=$(jq -r '.discord_thread // empty' "$plugin_file")
+  license=$(jq -r '.license // ""' "$plugin_file")
   has_readme=false
   [[ -f "$plugin_dir/README.md" ]] && has_readme=true
 
@@ -41,6 +42,10 @@ for plugin_dir in plugins/*/; do
     fi
     if [[ -n "$discord_thread" ]]; then
       echo "**Discord:** [Discussion Thread]($discord_thread)"
+      echo ""
+    fi
+    if [[ -n "$license" ]]; then
+      echo "**License:** [$license](https://spdx.org/licenses/${license}.html)"
       echo ""
     fi
     echo "## Downloads"

@@ -58,7 +58,7 @@ for plugin_dir in plugins/*/; do
     --argjson latest_metadata "$latest_metadata" \
     'with_entries(select(.key | IN(
       "name","version","description","owner","maintainers",
-      "deprecated","unlisted","min_dispatcharr_version","max_dispatcharr_version","repo_url","discord_thread"
+      "deprecated","unlisted","min_dispatcharr_version","max_dispatcharr_version","repo_url","discord_thread","license"
     ))) + {
       slug: $plugin_name,
       latest_url: $latest_url,
@@ -100,6 +100,7 @@ for plugin_dir in plugins/*/; do
     --arg icon_url "$icon_url" \
     --arg manifest_url "$plugin_manifest_url" \
     --arg author "$(jq -r '.owner // ""' "$plugin_file")" \
+    --arg license "$(jq -r '.license // ""' "$plugin_file")" \
     --arg latest_url "$latest_url" \
     '{
       name: $name,
@@ -107,6 +108,7 @@ for plugin_dir in plugins/*/; do
       icon_url: (if $icon_url != "" then $icon_url else null end),
       manifest_url: $manifest_url,
       author: $author,
+      license: (if $license != "" then $license else null end),
       latest_version: ($latest_metadata.version // null),
       latest_md5: ($latest_metadata.checksum_md5 // null),
       latest_url: $latest_url,

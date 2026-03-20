@@ -23,7 +23,7 @@ if [[ -z "$PLUGIN_NAME" ]]; then
   exit 1
 fi
 
-# Input validation — prevent path traversal and shell injection
+# Input validation - prevent path traversal and shell injection
 if [[ ! "$PLUGIN_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
   echo "Error: plugin_name must be lowercase-kebab-case (got '${PLUGIN_NAME}')"
   exit 1
@@ -76,7 +76,7 @@ if [[ -n "$VERSION" ]]; then
     echo "Updated latest.zip -> $(basename "$NEXT_ZIP")"
   else
     rm -f "releases/$PLUGIN_NAME/${PLUGIN_NAME}-latest.zip"
-    echo "No remaining versions — removed latest.zip"
+    echo "No remaining versions - removed latest.zip"
   fi
 
   # Remove this version from the manifest

@@ -53,7 +53,7 @@ PLUGIN_LIST=$(git diff --name-only "$MERGE_BASE" HEAD \
 
 if [[ -z "$PLUGIN_LIST" ]]; then
   if [[ $HAS_OUTSIDE_VIOLATION -eq 1 ]]; then
-    # Only outside-plugins changes — surface the error via report job
+    # Only outside-plugins changes - surface the error via report job
     echo "matrix=[]"      >> "$GITHUB_OUTPUT"
     echo "plugin_count=0" >> "$GITHUB_OUTPUT"
     echo "close_pr=false" >> "$GITHUB_OUTPUT"

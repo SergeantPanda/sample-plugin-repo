@@ -24,11 +24,11 @@ for plugin_dir in plugins/*/; do
   metadata_path="metadata/$plugin_name/${plugin_name}-${version}.json"
 
   if [[ -f "$zip_path" ]] && [[ -f "$metadata_path" ]]; then
-    echo "  $plugin_name v$version — skipping (already exists)"
+    echo "  $plugin_name v$version - skipping (already exists)"
     continue
   fi
 
-  echo "  $plugin_name v$version — building"
+  echo "  $plugin_name v$version - building"
   echo "$plugin_name@$version" >> changed_plugins.txt
 
   commit_sha=$(git log -1 --format=%H origin/$SOURCE_BRANCH -- "$plugin_dir")

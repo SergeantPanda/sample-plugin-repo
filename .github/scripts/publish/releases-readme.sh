@@ -25,6 +25,7 @@ render_plugin() {
   local commit_sha=$9
   local commit_sha_short=${10}
   local version_count=${11}
+  local license=${12}
 
   local zip_url="https://github.com/${GITHUB_REPOSITORY}/raw/$RELEASES_BRANCH/releases/${plugin_name}/${plugin_name}-latest.zip"
   local source_url="https://github.com/${GITHUB_REPOSITORY}/tree/$SOURCE_BRANCH/plugins/${plugin_name}"
@@ -44,6 +45,10 @@ render_plugin() {
   echo ""
   echo "$description"
   echo ""
+  if [[ -n "$license" ]]; then
+    echo "**License:** [$license](https://spdx.org/licenses/${license}.html)"
+    echo ""
+  fi
   echo "**Downloads:**"
   echo "- [Latest Release (\`$version\`)]($zip_url)"
   echo "- [All Versions ($version_count available)]($releases_dir)"
@@ -73,8 +78,8 @@ render_plugin() {
   echo ""
   echo "## Available Plugins"
   echo ""
-  echo "| Plugin | Version | Owner | Description |"
-  echo "|--------|---------|-------|-------------|"
+  echo "| Plugin | Version | Owner | License | Description |"
+  echo "|--------|---------|-------|---------|-------------|"
 
   # Table rows: active plugins first, then deprecated
   for pass in active deprecated; do
@@ -92,11 +97,13 @@ render_plugin() {
       version=$(jq -r '.version' "$plugin_file")
       owner=$(jq -r '.owner' "$plugin_file")
       description=$(jq -r '.description' "$plugin_file")
+      table_license=$(jq -r '.license // ""' "$plugin_file")
       anchor=$(echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g')
       suffix=""
       [[ "$pass" == "deprecated" ]] && suffix=" (deprecated)"
+      license_cell="${table_license:--}"
 
-      echo "| [\`$name\`](#$anchor)$suffix | \`$version\` | $owner | $description |"
+      echo "| [\`$name\`](#$anchor)$suffix | \`$version\` | $owner | $license_cell | $description |"
     done
   done
 
@@ -125,9 +132,10 @@ render_plugin() {
     commit_sha_short=$(git log -1 --format=%h origin/$SOURCE_BRANCH -- "$plugin_dir" 2>/dev/null || echo "unknown")
     version_count=$(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null \
       | grep -v latest | wc -l | tr -d ' ')
+    plugin_license=$(jq -r '.license // ""' "$plugin_file")
 
     render_plugin "false" "$plugin_name" "$name" "$version" "$owner" "$description" \
-      "$maintainers" "$last_updated" "$commit_sha" "$commit_sha_short" "$version_count"
+      "$maintainers" "$last_updated" "$commit_sha" "$commit_sha_short" "$version_count" "$plugin_license"
   done
 
   # Deprecated section (only if any exist)
@@ -168,9 +176,10 @@ render_plugin() {
       commit_sha_short=$(git log -1 --format=%h origin/$SOURCE_BRANCH -- "$plugin_dir" 2>/dev/null || echo "unknown")
       version_count=$(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null \
         | grep -v latest | wc -l | tr -d ' ')
+      plugin_license=$(jq -r '.license // ""' "$plugin_file")
 
       render_plugin "true" "$plugin_name" "$name" "$version" "$owner" "$description" \
-        "$maintainers" "$last_updated" "$commit_sha" "$commit_sha_short" "$version_count"
+        "$maintainers" "$last_updated" "$commit_sha" "$commit_sha_short" "$version_count" "$plugin_license"
     done
   fi
 
