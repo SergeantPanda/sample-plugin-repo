@@ -73,7 +73,19 @@ done
   echo "**Modified plugins:** $PLUGIN_COUNT"
   echo ""
 
-  if [[ "$CLOSE_PR" == "true" ]]; then
+  if [[ "${CLOSE_REASON:-}" == "no-valid-plugins" ]]; then
+    echo "---"
+    echo ""
+    echo "## ⚠️ Invalid Plugin Folder Name"
+    echo ""
+    echo "Your PR modifies plugin folder(s) whose names do not meet the naming requirements. Plugin folder names must be **lowercase letters, numbers, and hyphens only** (e.g. \`my-plugin\`). Spaces and other special characters are not allowed."
+    echo ""
+    echo "Please rename the folder(s) and update your PR."
+    if [[ -n "${DISCORD_URL:-}" ]]; then
+      echo ""
+      echo "For help: [Dispatcharr Discord]($DISCORD_URL)"
+    fi
+  elif [[ "$CLOSE_PR" == "true" ]]; then
     echo "---"
     echo ""
     echo "## PR Closed: Unauthorized"
@@ -132,8 +144,8 @@ else
   gh pr comment "$PR_NUMBER" --body "$(cat pr_comment.txt)"
 fi
 
-# Close if unauthorized
-if [[ "$CLOSE_PR" == "true" ]]; then
+# Close if unauthorized (not for other close reasons)
+if [[ "$CLOSE_PR" == "true" && "${CLOSE_REASON:-}" == "unauthorized" ]]; then
   gh pr close "$PR_NUMBER"
   echo "PR #$PR_NUMBER closed: unauthorized"
   exit 0

@@ -231,6 +231,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           DISCORD_URL: ${{ vars.DISCORD_URL }}
+          CLOSE_REASON: ${{ needs.detect-changes.outputs.close_reason }}
         run: |
           chmod +x .github/scripts/validate/*.sh
           .github/scripts/validate/report.sh \

@@ -79,7 +79,11 @@ PLUGIN_LIST=$(printf '%s' "$SAFE_LIST" | grep . || true)
 
 if [[ -z "$PLUGIN_LIST" ]]; then
   echo "::error::No valid plugin changes detected in this PR."
-  exit 1
+  echo "close_pr=true"              >> "$GITHUB_OUTPUT"
+  echo "close_reason=no-valid-plugins" >> "$GITHUB_OUTPUT"
+  echo "plugin_count=0"             >> "$GITHUB_OUTPUT"
+  echo "matrix=[]"                  >> "$GITHUB_OUTPUT"
+  exit 0
 fi
 
 PLUGIN_COUNT=$(echo "$PLUGIN_LIST" | wc -l | tr -d ' ')
@@ -129,6 +133,11 @@ MATRIX_JSON=$(echo "$PLUGIN_LIST" | jq -Rnc '[inputs]')
 echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
 echo "plugin_count=$PLUGIN_COUNT" >> "$GITHUB_OUTPUT"
 echo "close_pr=$CLOSE_PR" >> "$GITHUB_OUTPUT"
+if [[ "$CLOSE_PR" == "true" ]]; then
+  echo "close_reason=unauthorized" >> "$GITHUB_OUTPUT"
+else
+  echo "close_reason=" >> "$GITHUB_OUTPUT"
+fi
 
 echo "Detected $PLUGIN_COUNT plugin(s): $PLUGIN_LIST"
 echo "close_pr=$CLOSE_PR"
