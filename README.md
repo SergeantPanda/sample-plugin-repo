@@ -37,7 +37,7 @@ Results are posted as a comment on the PR.
 On merge to `main`, each plugin is:
 
 - Packaged into a versioned ZIP (`plugin-name-1.0.0.zip`) and a latest ZIP (`plugin-name-latest.zip`)
-- Given MD5 and SHA256 checksums
+- Given an MD5 checksum
 - Listed in `manifest.json` with download URLs and metadata
 - Only the 10 most recent versioned ZIPs are kept per plugin
 

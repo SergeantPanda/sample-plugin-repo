@@ -111,7 +111,7 @@ PRs where the author has no permission for any of the modified plugins are **aut
 Once your PR merges to `main`, the publish workflow runs automatically:
 
 1. Your plugin is packaged into a versioned ZIP (`your-plugin-1.0.0.zip`) and a latest ZIP (`your-plugin-latest.zip`)
-2. MD5 and SHA256 checksums are computed
+2. An MD5 checksum is computed
 3. A per-plugin `releases/your-plugin-name/README.md` is generated with download links and version history
 4. `manifest.json` is updated with your plugin's metadata and download URLs
 5. The releases branch README is regenerated
