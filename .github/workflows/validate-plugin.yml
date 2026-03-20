@@ -64,6 +64,9 @@ jobs:
       - name: Fetch base branch
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
+      - name: Save trusted scripts before fork checkout
+        run: cp -r .github/scripts /tmp/trusted-scripts
+
       - name: Checkout PR plugins (untrusted content only)
         uses: actions/checkout@v4
         with:
@@ -72,6 +75,9 @@ jobs:
           sparse-checkout: plugins
           sparse-checkout-cone-mode: false
           clean: false
+
+      - name: Restore trusted scripts
+        run: mkdir -p .github && cp -r /tmp/trusted-scripts .github/scripts
 
       - name: Detect changed plugins
         id: detect
@@ -109,6 +115,9 @@ jobs:
       - name: Fetch base branch
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
+      - name: Save trusted scripts before fork checkout
+        run: cp -r .github/scripts /tmp/trusted-scripts
+
       - name: Checkout PR plugins (untrusted content only)
         uses: actions/checkout@v4
         with:
@@ -117,6 +126,9 @@ jobs:
           sparse-checkout: plugins
           sparse-checkout-cone-mode: false
           clean: false
+
+      - name: Restore trusted scripts
+        run: mkdir -p .github && cp -r /tmp/trusted-scripts .github/scripts
 
       - name: Validate ${{ matrix.plugin }}
         id: validate
