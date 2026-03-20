@@ -132,12 +132,13 @@ done
       echo "## Code Quality"
       echo ""
       OVERALL_FAILED=1
-      echo "❌ **CodeQL security scan failed** - see [security findings](${CODEQL_SCAN_URL}) for details"
+      ERROR_LABEL="${CODEQL_ERRORS:-unknown}"
+      echo "❌ **CodeQL found $ERROR_LABEL high or critical issue(s)** - see [security findings](${CODEQL_SCAN_URL}) for details"
     elif [[ -n "${CODEQL_WARNINGS:-}" && "${CODEQL_WARNINGS:-}" -gt 0 ]]; then
       echo ""
       echo "## Code Quality"
       echo ""
-      echo "**CodeQL found $CODEQL_WARNINGS lower-severity finding(s)** (warning/note) — see [security findings](${CODEQL_SCAN_URL}) for details"
+      echo "**CodeQL found $CODEQL_WARNINGS lower-severity issue(s)** - see [security findings](${CODEQL_SCAN_URL}) for details"
     fi
 
     echo ""

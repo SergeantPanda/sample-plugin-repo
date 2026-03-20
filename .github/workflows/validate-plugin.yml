@@ -107,6 +107,7 @@ jobs:
     timeout-minutes: 15
     outputs:
       codeql_status: ${{ steps.status.outputs.codeql_status }}
+      codeql_errors: ${{ steps.status.outputs.codeql_errors }}
       codeql_warnings: ${{ steps.status.outputs.codeql_warnings }}
     steps:
       - name: Checkout PR merge commit for analysis
@@ -152,34 +153,46 @@ jobs:
         id: status
         if: always()
         run: |
-          # Count only high/critical/error-level results from SARIF (level=="error")
-          # SARIF level mapping: "error"=high/critical/error-quality, "warning"=medium, "note"=low
+          # Count results by severity from SARIF.
+          # A result is HIGH/CRITICAL/ERROR if:
+          #   - SARIF level == "error" (catches quality errors and most security findings), OR
+          #   - the rule's security-severity property >= 7.0 (catches HIGH security findings
+          #     that CodeQL may emit with level "warning" despite their CVSS score)
+          # Rules are defined in tool.driver.rules and tool.extensions[].rules.
+          JQ_HIGH='
+            [ .runs[] |
+              . as $run |
+              (
+                ($run.tool.driver.rules // []) +
+                (($run.tool.extensions // []) | map(.rules // []) | add // [])
+              ) | map({ (.id): (.properties["security-severity"] // "0") }) | add // {} as $secmap |
+              $run.results[] |
+              select(
+                .level == "error" or
+                (($secmap[.ruleId // .rule.id // ""] // "0") | tonumber) >= 7.0
+              )
+            ] | length'
+          JQ_TOTAL='[.runs[].results[]] | length'
           RESULT_COUNT=0
+          TOTAL_COUNT=0
           if [[ -d "sarif-results" ]]; then
             for f in sarif-results/*.sarif sarif-results/*.sarif.gz; do
               [[ -f "$f" ]] || continue
               if [[ "$f" == *.gz ]]; then
-                COUNT=$(gunzip -c "$f" | jq '[.runs[].results[] | select(.level == "error")] | length')
+                CONTENT=$(gunzip -c "$f")
+                COUNT=$(echo "$CONTENT" | jq "$JQ_HIGH")
+                TOT=$(echo "$CONTENT" | jq "$JQ_TOTAL")
               else
-                COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' "$f")
+                COUNT=$(jq "$JQ_HIGH" "$f")
+                TOT=$(jq "$JQ_TOTAL" "$f")
               fi
               RESULT_COUNT=$((RESULT_COUNT + COUNT))
+              TOTAL_COUNT=$((TOTAL_COUNT + TOT))
             done
           fi
-          # Count lower-severity (warning/note) results separately for informational display
-          WARN_COUNT=0
-          if [[ -d "sarif-results" ]]; then
-            for f in sarif-results/*.sarif sarif-results/*.sarif.gz; do
-              [[ -f "$f" ]] || continue
-              if [[ "$f" == *.gz ]]; then
-                COUNT=$(gunzip -c "$f" | jq '[.runs[].results[] | select(.level != "error")] | length')
-              else
-                COUNT=$(jq '[.runs[].results[] | select(.level != "error")] | length' "$f")
-              fi
-              WARN_COUNT=$((WARN_COUNT + COUNT))
-            done
-          fi
+          WARN_COUNT=$((TOTAL_COUNT - RESULT_COUNT))
           echo "Found $RESULT_COUNT high/error/critical and $WARN_COUNT lower-severity CodeQL result(s)"
+          echo "codeql_errors=$RESULT_COUNT" >> "$GITHUB_OUTPUT"
           echo "codeql_warnings=$WARN_COUNT" >> "$GITHUB_OUTPUT"
           if [[ "$RESULT_COUNT" -gt 0 || "${{ steps.analyze.outcome }}" != "success" ]]; then
             echo "codeql_status=failure" >> "$GITHUB_OUTPUT"
@@ -292,6 +305,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           DISCORD_URL: ${{ vars.DISCORD_URL }}
           CODEQL_RESULT: ${{ needs.codeql-analyze.outputs.codeql_status }}
+          CODEQL_ERRORS: ${{ needs.codeql-analyze.outputs.codeql_errors }}
           CODEQL_WARNINGS: ${{ needs.codeql-analyze.outputs.codeql_warnings }}
           OUTSIDE_FILES: ${{ needs.detect-changes.outputs.outside_files }}
         run: |
