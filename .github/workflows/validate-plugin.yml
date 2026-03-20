@@ -108,10 +108,9 @@ jobs:
     outputs:
       codeql_status: ${{ steps.status.outputs.codeql_status }}
     steps:
-      - name: Checkout PR plugins for analysis
+      - name: Checkout PR merge commit for analysis
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
           sparse-checkout: plugins
           sparse-checkout-cone-mode: false
 
