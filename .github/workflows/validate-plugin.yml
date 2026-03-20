@@ -111,8 +111,13 @@ jobs:
       - name: Checkout PR merge commit for analysis
         uses: actions/checkout@v4
         with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
           sparse-checkout: plugins
           sparse-checkout-cone-mode: false
+
+      - name: Get merge commit SHA
+        id: merge
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -137,6 +142,8 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: sarif-results
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          sha: ${{ steps.merge.outputs.sha }}
           category: /language:python
         continue-on-error: true
 
