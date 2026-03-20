@@ -178,7 +178,7 @@ has_permission="false"
   # Permission check - use base branch version to prevent self-granting via the PR
   IS_REPO_MAINTAINER=$(check_repo_maintainer "$PR_AUTHOR")
   if [[ "$IS_REPO_MAINTAINER" -eq 1 ]]; then
-    TABLE_ROWS+=("| Permission | ✅ | |")
+    TABLE_ROWS+=("| Permission | ✅ | You have permission to modify this plugin |")
     has_permission="true"
   elif git show "origin/${BASE_REF}:${PLUGIN_JSON}" > /dev/null 2>&1; then
     BASE_JSON=$(git show "origin/${BASE_REF}:${PLUGIN_JSON}")
