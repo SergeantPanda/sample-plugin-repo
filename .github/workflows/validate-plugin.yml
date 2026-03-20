@@ -51,6 +51,7 @@ jobs:
       matrix: ${{ steps.detect.outputs.matrix }}
       plugin_count: ${{ steps.detect.outputs.plugin_count }}
       close_pr: ${{ steps.detect.outputs.close_pr }}
+      close_reason: ${{ steps.detect.outputs.close_reason }}
     steps:
       - name: Checkout base branch scripts (trusted)
         uses: actions/checkout@v4
