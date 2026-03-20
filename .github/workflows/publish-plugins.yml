@@ -43,7 +43,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: .github/scripts/publish-plugins.sh ${{ github.ref_name }} 2>&1 | tee publish.log
+        run: |
+          set -o pipefail
+          .github/scripts/publish/run.sh ${{ github.ref_name }} 2>&1 | tee publish.log
 
       - name: Generate job summary
         if: always()
