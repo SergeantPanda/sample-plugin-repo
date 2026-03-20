@@ -74,8 +74,8 @@ done
   echo ""
 
   if [[ "${CLOSE_REASON:-}" == "no-valid-plugins" ]]; then
-    echo ""
-    echo "## Invalid Plugin Folder Name"
+    # echo ""
+    # echo "## Invalid Plugin Folder Name"
     echo ""
     echo "⚠️ Your PR modifies plugin folder(s) whose names do not meet the naming requirements. Plugin folder names must be **lowercase letters, numbers, and hyphens only** (e.g. \`my-plugin\`). Spaces and other special characters are not allowed."
     echo ""
@@ -108,8 +108,8 @@ done
 
     if [[ -n "${OUTSIDE_FILES:-}" ]]; then
       OVERALL_FAILED=1
-      echo ""
-      echo "## Unauthorized File Modification"
+      # echo ""
+      # echo "## Unauthorized File Modification"
       echo ""
       echo "⚠️ This PR modifies files outside of \`plugins/\`, which requires write access to the repository. These changes will block merging."
       echo ""
@@ -128,15 +128,24 @@ done
 
     CODEQL_SCAN_URL="https://github.com/${GITHUB_REPOSITORY}/security/code-scanning?query=is%3Aopen+pr%3A${PR_NUMBER}"
     if [[ -n "${CODEQL_RESULT:-}" && "${CODEQL_RESULT:-}" != "skipped" && "${CODEQL_RESULT:-}" != "success" ]]; then
-      echo ""
-      echo "## Code Quality"
+      # echo ""
+      # echo "## Code Quality"
       echo ""
       OVERALL_FAILED=1
       ERROR_LABEL="${CODEQL_ERRORS:-unknown}"
-      echo "❌ **CodeQL found $ERROR_LABEL high/critical/error issue(s)**"
+      echo "❌ **CodeQL found $ERROR_LABEL high or critical issue(s)**"
       echo ""
       if [[ -f "codeql-findings/codeql-findings.md" ]]; then
         cat "codeql-findings/codeql-findings.md"
+      fi
+    fi
+
+    if [[ -n "${CODEQL_MEDIUMS:-}" && "${CODEQL_MEDIUMS:-}" != "0" && "${CODEQL_RESULT:-}" != "skipped" ]]; then
+      echo ""
+      echo "ℹ️ **CodeQL found ${CODEQL_MEDIUMS} medium severity issue(s)** - these are not blocking but are worth a look."
+      echo ""
+      if [[ -f "codeql-medium-findings/codeql-medium-findings.md" ]]; then
+        cat "codeql-medium-findings/codeql-medium-findings.md"
       fi
     fi
 
