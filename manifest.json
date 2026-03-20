@@ -1,122 +1,41 @@
 {
   "plugins": [
     {
-      "name": "Dispatcharr Exporter",
-      "version": "2.4.0",
-      "description": "Expose Dispatcharr metrics in Prometheus exporter-compatible format for monitoring",
-      "owner": "sethwv",
-      "maintainers": [
-        "sethwv-alt"
-      ],
-      "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/dispatcharr-exporter/dispatcharr-exporter-latest.zip",
-      "versions": [
-        {
-          "version": "2.4.0",
-          "commit_sha": "594de3454ecc7d6859800991e895a4f84e979ffb",
-          "commit_sha_short": "594de34",
-          "build_timestamp": "2026-03-16T22:58:03Z",
-          "last_updated": "2026-03-16T18:57:47-04:00",
-          "checksum_md5": "cdafb6daf3584c43df8df39b63137a3e",
-          "checksum_sha256": "ff5b9c5eb0737cc0a7fa716542ba905cd81c66f6dcb851b5aadc2e55976f7cd4",
-          "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/dispatcharr-exporter/dispatcharr-exporter-2.4.0.zip"
-        }
-      ],
-      "last_updated": "2026-03-16T18:57:47-04:00",
-      "latest": {
-        "version": "2.4.0",
-        "commit_sha": "594de3454ecc7d6859800991e895a4f84e979ffb",
-        "commit_sha_short": "594de34",
-        "build_timestamp": "2026-03-16T22:58:03Z",
-        "last_updated": "2026-03-16T18:57:47-04:00",
-        "checksum_md5": "cdafb6daf3584c43df8df39b63137a3e",
-        "checksum_sha256": "ff5b9c5eb0737cc0a7fa716542ba905cd81c66f6dcb851b5aadc2e55976f7cd4",
-        "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/dispatcharr-exporter/dispatcharr-exporter-latest.zip",
-        "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/dispatcharr-exporter/dispatcharr-exporter-2.4.0.zip"
-      },
-      "latest_commit_sha": "594de3454ecc7d6859800991e895a4f84e979ffb",
-      "latest_commit_sha_short": "594de34",
-      "latest_build_timestamp": "2026-03-16T22:58:03Z",
-      "latest_checksum_md5": "cdafb6daf3584c43df8df39b63137a3e",
-      "latest_checksum_sha256": "ff5b9c5eb0737cc0a7fa716542ba905cd81c66f6dcb851b5aadc2e55976f7cd4"
-    },
-    {
-      "name": "old-proof-of-concept",
+      "name": "Cool Test Plugin",
       "version": "0.1.0",
-      "owner": "sethwv",
-      "maintainers": [
-        "sethwv-alt"
-      ],
+      "owner": "sethwv-alt",
       "description": "A cool description",
-      "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/old-proof-of-concept/old-proof-of-concept-latest.zip",
+      "slug": "my-cool-test-plugin",
+      "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/my-cool-test-plugin/my-cool-test-plugin-latest.zip",
       "versions": [
         {
           "version": "0.1.0",
-          "commit_sha": "c68c06eb069fd86c2294ad0c976055936d8a593e",
-          "commit_sha_short": "c68c06e",
-          "build_timestamp": "2026-03-16T22:55:19Z",
-          "last_updated": "2026-03-16T18:27:35-04:00",
-          "checksum_md5": "1b411387e3aa76fda4456e00537d01ea",
-          "checksum_sha256": "b506117f503e3742ee5e1eb388b0bbac63a684d72e21e3822053dc86c801b8b6",
-          "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/old-proof-of-concept/old-proof-of-concept-0.1.0.zip"
+          "commit_sha": "b0833ed39b83b6d956e016bcafe7272cdfca51eb",
+          "commit_sha_short": "b0833ed",
+          "build_timestamp": "2026-03-20T13:49:01Z",
+          "last_updated": "2026-03-20T09:43:12-04:00",
+          "checksum_md5": "b198b3d0e4f775b9ef9cbc02c9d24f48",
+          "checksum_sha256": "ba928c0a822f6852ed3c30b3832fbc0af9e39be296308ea9a3c3aa03be02e6be",
+          "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/my-cool-test-plugin/my-cool-test-plugin-0.1.0.zip"
         }
       ],
-      "last_updated": "2026-03-16T18:27:35-04:00",
+      "last_updated": "2026-03-20T09:43:12-04:00",
       "latest": {
         "version": "0.1.0",
-        "commit_sha": "c68c06eb069fd86c2294ad0c976055936d8a593e",
-        "commit_sha_short": "c68c06e",
-        "build_timestamp": "2026-03-16T22:55:19Z",
-        "last_updated": "2026-03-16T18:27:35-04:00",
-        "checksum_md5": "1b411387e3aa76fda4456e00537d01ea",
-        "checksum_sha256": "b506117f503e3742ee5e1eb388b0bbac63a684d72e21e3822053dc86c801b8b6",
-        "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/old-proof-of-concept/old-proof-of-concept-latest.zip",
-        "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/old-proof-of-concept/old-proof-of-concept-0.1.0.zip"
+        "commit_sha": "b0833ed39b83b6d956e016bcafe7272cdfca51eb",
+        "commit_sha_short": "b0833ed",
+        "build_timestamp": "2026-03-20T13:49:01Z",
+        "last_updated": "2026-03-20T09:43:12-04:00",
+        "checksum_md5": "b198b3d0e4f775b9ef9cbc02c9d24f48",
+        "checksum_sha256": "ba928c0a822f6852ed3c30b3832fbc0af9e39be296308ea9a3c3aa03be02e6be",
+        "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/my-cool-test-plugin/my-cool-test-plugin-latest.zip",
+        "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/my-cool-test-plugin/my-cool-test-plugin-0.1.0.zip"
       },
-      "latest_commit_sha": "c68c06eb069fd86c2294ad0c976055936d8a593e",
-      "latest_commit_sha_short": "c68c06e",
-      "latest_build_timestamp": "2026-03-16T22:55:19Z",
-      "latest_checksum_md5": "1b411387e3aa76fda4456e00537d01ea",
-      "latest_checksum_sha256": "b506117f503e3742ee5e1eb388b0bbac63a684d72e21e3822053dc86c801b8b6"
-    },
-    {
-      "name": "Weatharr Station",
-      "version": "2.0.0",
-      "description": "Start a local WeatherStream broadcast and publish it as a channel.",
-      "owner": "OkinawaBoss",
-      "maintainers": [
-        "OkinawaBoss",
-        "sethwv-alt"
-      ],
-      "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/weatharr-station/weatharr-station-latest.zip",
-      "versions": [
-        {
-          "version": "2.0.0",
-          "commit_sha": "c68c06eb069fd86c2294ad0c976055936d8a593e",
-          "commit_sha_short": "c68c06e",
-          "build_timestamp": "2026-03-16T22:55:20Z",
-          "last_updated": "2026-03-16T18:27:35-04:00",
-          "checksum_md5": "a702b6d09115b70c5bc9ebe759419e64",
-          "checksum_sha256": "d6d53e8debeee822b2c7bb31f3b0fa2eba3b26061a6d9a8d438cea322a5c71e3",
-          "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/weatharr-station/weatharr-station-2.0.0.zip"
-        }
-      ],
-      "last_updated": "2026-03-16T18:27:35-04:00",
-      "latest": {
-        "version": "2.0.0",
-        "commit_sha": "c68c06eb069fd86c2294ad0c976055936d8a593e",
-        "commit_sha_short": "c68c06e",
-        "build_timestamp": "2026-03-16T22:55:20Z",
-        "last_updated": "2026-03-16T18:27:35-04:00",
-        "checksum_md5": "a702b6d09115b70c5bc9ebe759419e64",
-        "checksum_sha256": "d6d53e8debeee822b2c7bb31f3b0fa2eba3b26061a6d9a8d438cea322a5c71e3",
-        "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/weatharr-station/weatharr-station-latest.zip",
-        "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/weatharr-station/weatharr-station-2.0.0.zip"
-      },
-      "latest_commit_sha": "c68c06eb069fd86c2294ad0c976055936d8a593e",
-      "latest_commit_sha_short": "c68c06e",
-      "latest_build_timestamp": "2026-03-16T22:55:20Z",
-      "latest_checksum_md5": "a702b6d09115b70c5bc9ebe759419e64",
-      "latest_checksum_sha256": "d6d53e8debeee822b2c7bb31f3b0fa2eba3b26061a6d9a8d438cea322a5c71e3"
+      "latest_commit_sha": "b0833ed39b83b6d956e016bcafe7272cdfca51eb",
+      "latest_commit_sha_short": "b0833ed",
+      "latest_build_timestamp": "2026-03-20T13:49:01Z",
+      "latest_checksum_md5": "b198b3d0e4f775b9ef9cbc02c9d24f48",
+      "latest_checksum_sha256": "ba928c0a822f6852ed3c30b3832fbc0af9e39be296308ea9a3c3aa03be02e6be"
     }
   ]
 }

@@ -1,0 +1,37 @@
+{
+  "name": "Cool Test Plugin",
+  "version": "0.1.0",
+  "owner": "sethwv-alt",
+  "description": "A cool description",
+  "slug": "my-cool-test-plugin",
+  "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/my-cool-test-plugin/my-cool-test-plugin-latest.zip",
+  "versions": [
+    {
+      "version": "0.1.0",
+      "commit_sha": "b0833ed39b83b6d956e016bcafe7272cdfca51eb",
+      "commit_sha_short": "b0833ed",
+      "build_timestamp": "2026-03-20T13:49:01Z",
+      "last_updated": "2026-03-20T09:43:12-04:00",
+      "checksum_md5": "b198b3d0e4f775b9ef9cbc02c9d24f48",
+      "checksum_sha256": "ba928c0a822f6852ed3c30b3832fbc0af9e39be296308ea9a3c3aa03be02e6be",
+      "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/my-cool-test-plugin/my-cool-test-plugin-0.1.0.zip"
+    }
+  ],
+  "last_updated": "2026-03-20T09:43:12-04:00",
+  "latest": {
+    "version": "0.1.0",
+    "commit_sha": "b0833ed39b83b6d956e016bcafe7272cdfca51eb",
+    "commit_sha_short": "b0833ed",
+    "build_timestamp": "2026-03-20T13:49:01Z",
+    "last_updated": "2026-03-20T09:43:12-04:00",
+    "checksum_md5": "b198b3d0e4f775b9ef9cbc02c9d24f48",
+    "checksum_sha256": "ba928c0a822f6852ed3c30b3832fbc0af9e39be296308ea9a3c3aa03be02e6be",
+    "latest_url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/my-cool-test-plugin/my-cool-test-plugin-latest.zip",
+    "url": "https://github.com/sethwv/sample-plugin-repo/raw/releases/releases/my-cool-test-plugin/my-cool-test-plugin-0.1.0.zip"
+  },
+  "latest_commit_sha": "b0833ed39b83b6d956e016bcafe7272cdfca51eb",
+  "latest_commit_sha_short": "b0833ed",
+  "latest_build_timestamp": "2026-03-20T13:49:01Z",
+  "latest_checksum_md5": "b198b3d0e4f775b9ef9cbc02c9d24f48",
+  "latest_checksum_sha256": "ba928c0a822f6852ed3c30b3832fbc0af9e39be296308ea9a3c3aa03be02e6be"
+}
