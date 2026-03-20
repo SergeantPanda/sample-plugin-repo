@@ -126,13 +126,18 @@ done
       echo ""
     fi
 
+    CODEQL_SCAN_URL="https://github.com/${GITHUB_REPOSITORY}/security/code-scanning?query=is%3Aopen+pr%3A${PR_NUMBER}"
     if [[ -n "${CODEQL_RESULT:-}" && "${CODEQL_RESULT:-}" != "skipped" && "${CODEQL_RESULT:-}" != "success" ]]; then
       echo ""
       echo "## Code Quality"
       echo ""
       OVERALL_FAILED=1
-      CODEQL_SCAN_URL="https://github.com/${GITHUB_REPOSITORY}/security/code-scanning?query=is%3Aopen+pr%3A${PR_NUMBER}"
       echo "❌ **CodeQL security scan failed** - see [security findings](${CODEQL_SCAN_URL}) for details"
+    elif [[ -n "${CODEQL_WARNINGS:-}" && "${CODEQL_WARNINGS:-}" -gt 0 ]]; then
+      echo ""
+      echo "## Code Quality"
+      echo ""
+      echo "**CodeQL found $CODEQL_WARNINGS lower-severity finding(s)** (warning/note) — see [security findings](${CODEQL_SCAN_URL}) for details"
     fi
 
     echo ""

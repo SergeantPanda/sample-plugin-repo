@@ -107,6 +107,7 @@ jobs:
     timeout-minutes: 15
     outputs:
       codeql_status: ${{ steps.status.outputs.codeql_status }}
+      codeql_warnings: ${{ steps.status.outputs.codeql_warnings }}
     steps:
       - name: Checkout PR merge commit for analysis
         uses: actions/checkout@v4
@@ -165,7 +166,21 @@ jobs:
               RESULT_COUNT=$((RESULT_COUNT + COUNT))
             done
           fi
-          echo "Found $RESULT_COUNT CodeQL result(s)"
+          # Count lower-severity (warning/note) results separately for informational display
+          WARN_COUNT=0
+          if [[ -d "sarif-results" ]]; then
+            for f in sarif-results/*.sarif sarif-results/*.sarif.gz; do
+              [[ -f "$f" ]] || continue
+              if [[ "$f" == *.gz ]]; then
+                COUNT=$(gunzip -c "$f" | jq '[.runs[].results[] | select(.level != "error")] | length')
+              else
+                COUNT=$(jq '[.runs[].results[] | select(.level != "error")] | length' "$f")
+              fi
+              WARN_COUNT=$((WARN_COUNT + COUNT))
+            done
+          fi
+          echo "Found $RESULT_COUNT high/error/critical and $WARN_COUNT lower-severity CodeQL result(s)"
+          echo "codeql_warnings=$WARN_COUNT" >> "$GITHUB_OUTPUT"
           if [[ "$RESULT_COUNT" -gt 0 || "${{ steps.analyze.outcome }}" != "success" ]]; then
             echo "codeql_status=failure" >> "$GITHUB_OUTPUT"
           else
@@ -277,6 +292,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           DISCORD_URL: ${{ vars.DISCORD_URL }}
           CODEQL_RESULT: ${{ needs.codeql-analyze.outputs.codeql_status }}
+          CODEQL_WARNINGS: ${{ needs.codeql-analyze.outputs.codeql_warnings }}
           OUTSIDE_FILES: ${{ needs.detect-changes.outputs.outside_files }}
         run: |
           chmod +x .github/scripts/validate/*.sh
