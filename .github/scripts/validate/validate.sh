@@ -148,7 +148,7 @@ has_permission="false"
     DISPLAY_PARTS=()
     [[ -n "$AUTHOR" ]] && DISPLAY_PARTS+=("\`$AUTHOR\`")
     for m in $MAINTAINERS; do DISPLAY_PARTS+=("\`$m\`"); done
-    DISPLAY=$(IFS=", "; echo "${DISPLAY_PARTS[*]}")
+    DISPLAY=$(printf '%s, ' "${DISPLAY_PARTS[@]}"); DISPLAY="${DISPLAY%, }"
     TABLE_ROWS+=("| Maintainers | ✅ | $DISPLAY |")
   fi
 
