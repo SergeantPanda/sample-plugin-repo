@@ -161,23 +161,13 @@ done
   fi
 } > pr_comment.txt
 
-# Post or update PR comment (use REST API for numeric comment IDs)
-EXISTING_IDS=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments?per_page=100" \
-  --jq '.[] | select(.user.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->")) | .id' \
-  2>/dev/null || true)
+# Post or update PR comment
+EXISTING_COMMENT_ID=$(gh pr view "$PR_NUMBER" --json comments \
+  --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->")) | .id' \
+  || true)
 
-PRIMARY_ID=""
-for id in $EXISTING_IDS; do
-  if [[ -z "$PRIMARY_ID" ]]; then
-    PRIMARY_ID="$id"
-  else
-    # Delete any duplicate validation comments
-    gh api "repos/$GITHUB_REPOSITORY/issues/comments/$id" -X DELETE 2>/dev/null || true
-  fi
-done
-
-if [[ -n "$PRIMARY_ID" ]]; then
-  gh api "repos/$GITHUB_REPOSITORY/issues/comments/$PRIMARY_ID" -X PATCH -f body="$(cat pr_comment.txt)"
+if [[ -n "$EXISTING_COMMENT_ID" ]]; then
+  gh api "repos/$GITHUB_REPOSITORY/issues/comments/$EXISTING_COMMENT_ID" -X PATCH -f body="$(cat pr_comment.txt)"
 else
   gh pr comment "$PR_NUMBER" --body "$(cat pr_comment.txt)"
 fi
