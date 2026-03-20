@@ -153,10 +153,20 @@ jobs:
         id: status
         if: always()
         run: |
-          # Count results by SARIF level.
-          # CodeQL sets level="error" for all high/critical security findings
-          # (security-severity >= 7.0) and for quality "error" findings.
-          # Medium security findings always have level="warning".
+          # Only block on security findings with CVSS score >= 7.0 (HIGH or CRITICAL).
+          # CodeQL stores this in rule properties["security-severity"], not in result.level.
+          JQ_BLOCKING='
+            [ .runs[] |
+              . as $run |
+              (
+                [ (($run.tool.driver.rules // [])[]          | {key: (.id // ""), value: ((.properties["security-severity"] // "0") | tostring)}),
+                  ((($run.tool.extensions // [])[].rules // [])[] | {key: (.id // ""), value: ((.properties["security-severity"] // "0") | tostring)}) ]
+                | from_entries
+              ) as $secmap |
+              ($run.results // [])[] |
+              ((.ruleId // .rule.id // "") | tostring) as $rid |
+              select((($secmap[$rid] // "0") | tonumber) >= 7.0)
+            ] | length'
           RESULT_COUNT=0
           TOTAL_COUNT=0
           if [[ -d "sarif-results" ]]; then
@@ -167,11 +177,17 @@ jobs:
               else
                 CONTENT=$(cat "$f")
               fi
-              COUNT=$(echo "$CONTENT" | jq '[.runs[] | (.results // [])[] | select(.level == "error")] | length')
+              COUNT=$(echo "$CONTENT" | jq "$JQ_BLOCKING")
               TOT=$(echo "$CONTENT" | jq '[.runs[] | (.results // [])[]] | length')
-              echo "File $f: $COUNT error-level, $TOT total"
-              # Debug: list what rules are being counted
-              echo "$CONTENT" | jq -r '.runs[] | (.results // [])[] | select(.level == "error") | "  [error] \(.ruleId // .rule.id // "unknown")"' || true
+              echo "File $f: ${COUNT:-0} blocking, $TOT total"
+              echo "$CONTENT" | jq -r \
+                '[ .runs[] | . as $run |
+                   ([ (($run.tool.driver.rules // [])[] | {key: (.id // ""), value: ((.properties["security-severity"] // "0") | tostring)}),
+                      ((($run.tool.extensions // [])[].rules // [])[] | {key: (.id // ""), value: ((.properties["security-severity"] // "0") | tostring)}) ] | from_entries) as $secmap |
+                   ($run.results // [])[] |
+                   (($r.ruleId // $r.rule.id // "") | tostring) as $rid |
+                   select((($secmap[$rid] // "0") | tonumber) >= 7.0) |
+                   "  [blocking] \($rid) sec-sev=\($secmap[$rid] // \"n/a\")" ] | .[]' || true
               RESULT_COUNT=$((RESULT_COUNT + ${COUNT:-0}))
               TOTAL_COUNT=$((TOTAL_COUNT + ${TOT:-0}))
             done
@@ -197,12 +213,21 @@ jobs:
                 echo "$FC" | jq -r \
                   --arg repo "$GITHUB_REPOSITORY" \
                   --arg sha "$MERGE_SHA" \
-                  '.runs[] | (.results // [])[] | select(.level == "error") |
+                  '.runs[] |
+                  . as $run |
+                  (
+                    [ (($run.tool.driver.rules // [])[]         | {key: (.id // ""), value: ((.properties["security-severity"] // "0") | tostring)}),
+                      ((($run.tool.extensions // [])[].rules // [])[] | {key: (.id // ""), value: ((.properties["security-severity"] // "0") | tostring)}) ]
+                    | from_entries
+                  ) as $secmap |
+                  ($run.results // [])[] |
+                  . as $result |
+                  (($result.ruleId // $result.rule.id // "") | tostring) as $rid |
+                  select((($secmap[$rid] // "0") | tonumber) >= 7.0) |
                   (.locations[0].physicalLocation.artifactLocation.uri // "?") as $uri |
                   ((.locations[0].physicalLocation.region.startLine // "?") | tostring) as $line |
-                  (.ruleId // .rule.id // "unknown") as $rule |
                   (.message.text // "no description" | gsub("\n"; " ") | if length > 150 then .[0:150] + "\u2026" else . end) as $msg |
-                  "| `\($rule)` | [\($uri):\($line)](https://github.com/\($repo)/blob/\($sha)/\($uri)#L\($line)) | \($msg) |"'
+                  "| `\($rid)` | [\($uri):\($line)](https://github.com/\($repo)/blob/\($sha)/\($uri)#L\($line)) | \($msg) |"'
               done
             } > codeql-findings.md
           fi
