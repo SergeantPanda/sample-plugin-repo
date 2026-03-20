@@ -103,7 +103,7 @@ has_permission="false"
 
   # README (optional)
   if [[ ! -f "$README" ]]; then
-    echo "- ℹ️ README.md not provided (optional)"
+    # echo "- ℹ️ README.md not provided (optional)"
   else
     echo "- ✅ README.md exists"
   fi
@@ -247,11 +247,11 @@ has_permission="false"
 
   # Summary
   echo ""
-  if [[ $failed -eq 0 ]]; then
-    echo "✅ **All checks passed for \`$PLUGIN_NAME\`**"
-  else
-    echo "❌ **Validation failed for \`$PLUGIN_NAME\`**"
-  fi
+  # if [[ $failed -eq 0 ]]; then
+  #   echo "✅ **All checks passed for \`$PLUGIN_NAME\`**"
+  # else
+  #   echo "❌ **Validation failed for \`$PLUGIN_NAME\`**"
+  # fi
 
   # Metadata table row (pipe-delimited, consumed by aggregate-report.sh)
   echo "<!--META_ROW:$(jq -r '[

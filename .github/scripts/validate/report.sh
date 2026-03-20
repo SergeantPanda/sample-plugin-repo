@@ -133,7 +133,7 @@ done
       echo ""
       OVERALL_FAILED=1
       ERROR_LABEL="${CODEQL_ERRORS:-unknown}"
-      echo "❌ **CodeQL found $ERROR_LABEL high or critical issue(s)**"
+      echo "❌ **CodeQL found $ERROR_LABEL high or critical issue(s)** - these must be fixed before merging."
       echo ""
       if [[ -f "codeql-findings/codeql-findings.md" ]]; then
         cat "codeql-findings/codeql-findings.md"
@@ -142,7 +142,7 @@ done
 
     if [[ -n "${CODEQL_MEDIUMS:-}" && "${CODEQL_MEDIUMS:-}" != "0" && "${CODEQL_RESULT:-}" != "skipped" ]]; then
       echo ""
-      echo "ℹ️ **CodeQL found ${CODEQL_MEDIUMS} medium severity issue(s)** - these are not blocking but are worth a look."
+      echo "**CodeQL found ${CODEQL_MEDIUMS} medium severity issue(s)** - these are not blocking but are worth a look."
       echo ""
       if [[ -f "codeql-medium-findings/codeql-medium-findings.md" ]]; then
         cat "codeql-medium-findings/codeql-medium-findings.md"
