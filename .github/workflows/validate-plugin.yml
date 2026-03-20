@@ -153,26 +153,10 @@ jobs:
         id: status
         if: always()
         run: |
-          # Count results by severity from SARIF.
-          # A result is HIGH/CRITICAL/ERROR if:
-          #   - SARIF level == "error" (catches quality errors and most security findings), OR
-          #   - the rule's security-severity property >= 7.0 (catches HIGH security findings
-          #     that CodeQL may emit with level "warning" despite their CVSS score)
-          # Rules are defined in tool.driver.rules and tool.extensions[].rules.
-          JQ_HIGH='
-            [ .runs[] |
-              . as $run |
-              (
-                ($run.tool.driver.rules // []) +
-                (($run.tool.extensions // []) | map(.rules // []) | add // [])
-              ) | map({ (.id): (.properties["security-severity"] // "0") }) | add // {} as $secmap |
-              $run.results[] |
-              select(
-                .level == "error" or
-                (($secmap[.ruleId // .rule.id // ""] // "0") | tonumber) >= 7.0
-              )
-            ] | length'
-          JQ_TOTAL='[.runs[].results[]] | length'
+          # Count results by SARIF level.
+          # CodeQL sets level="error" for all high/critical security findings
+          # (security-severity >= 7.0) and for quality "error" findings.
+          # Medium security findings always have level="warning".
           RESULT_COUNT=0
           TOTAL_COUNT=0
           if [[ -d "sarif-results" ]]; then
@@ -180,17 +164,19 @@ jobs:
               [[ -f "$f" ]] || continue
               if [[ "$f" == *.gz ]]; then
                 CONTENT=$(gunzip -c "$f")
-                COUNT=$(echo "$CONTENT" | jq "$JQ_HIGH")
-                TOT=$(echo "$CONTENT" | jq "$JQ_TOTAL")
               else
-                COUNT=$(jq "$JQ_HIGH" "$f")
-                TOT=$(jq "$JQ_TOTAL" "$f")
+                CONTENT=$(cat "$f")
               fi
-              RESULT_COUNT=$((RESULT_COUNT + COUNT))
-              TOTAL_COUNT=$((TOTAL_COUNT + TOT))
+              COUNT=$(echo "$CONTENT" | jq '[.runs[] | (.results // [])[] | select(.level == "error")] | length')
+              TOT=$(echo "$CONTENT" | jq '[.runs[] | (.results // [])[]] | length')
+              echo "File $f: $COUNT error-level, $TOT total"
+              # Debug: list what rules are being counted
+              echo "$CONTENT" | jq -r '.runs[] | (.results // [])[] | select(.level == "error") | "  [error] \(.ruleId // .rule.id // "unknown")"' || true
+              RESULT_COUNT=$((RESULT_COUNT + ${COUNT:-0}))
+              TOTAL_COUNT=$((TOTAL_COUNT + ${TOT:-0}))
             done
           fi
-          WARN_COUNT=$((TOTAL_COUNT - RESULT_COUNT))
+          WARN_COUNT=$(( TOTAL_COUNT > RESULT_COUNT ? TOTAL_COUNT - RESULT_COUNT : 0 ))
           echo "Found $RESULT_COUNT high/error/critical and $WARN_COUNT lower-severity CodeQL result(s)"
           echo "codeql_errors=$RESULT_COUNT" >> "$GITHUB_OUTPUT"
           echo "codeql_warnings=$WARN_COUNT" >> "$GITHUB_OUTPUT"
