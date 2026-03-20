@@ -94,7 +94,7 @@ has_permission="false"
 
   # Folder name format
   if [[ ! "$PLUGIN_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
-    TABLE_ROWS+=("| Folder name | ❌ | Must be lowercase-kebab-case — got \`$PLUGIN_NAME\`, e.g. \`my-plugin-name\` |")
+    TABLE_ROWS+=("| Folder name | ❌ | Must be lowercase-kebab-case - got \`$PLUGIN_NAME\`, e.g. \`my-plugin-name\` |")
     failed=1
   fi
 
@@ -120,7 +120,7 @@ has_permission="false"
 
   # ── Required content ──────────────────────────────────────────────────────────
 
-  # Required fields: name, version, description — shown as a combined row
+  # Required fields: name, version, description - shown as a combined row
   MISSING_FIELDS=()
   for key in name version description; do
     if ! jq -e ".\"$key\"" "$PLUGIN_JSON" >/dev/null 2>&1; then
@@ -132,7 +132,7 @@ has_permission="false"
     MISSING_LIST=$(IFS=", "; echo "${MISSING_FIELDS[*]}")
     TABLE_ROWS+=("| Required fields | ❌ | Missing: $MISSING_LIST |")
   else
-    TABLE_ROWS+=("| Required fields | ✅ | |")
+    TABLE_ROWS+=("| Required fields | ✅ | All required fields present |")
   fi
 
   # Extract metadata
@@ -155,16 +155,17 @@ has_permission="false"
   # License (required)
   LICENSE_ID=$(jq -r '.license // ""' "$PLUGIN_JSON")
   if [[ -z "$LICENSE_ID" ]]; then
-    TABLE_ROWS+=("| License | ❌ | \`license\` is required — provide an [OSI-approved SPDX identifier](https://spdx.org/licenses/) (e.g. \`MIT\`, \`Apache-2.0\`) |")
+    TABLE_ROWS+=("| License | ❌ | \`license\` is required - provide an [OSI-approved SPDX identifier](https://spdx.org/licenses/) (e.g. \`MIT\`, \`Apache-2.0\`) |")
     failed=1
   else
     SPDX_JSON=$(curl -fsSL "https://raw.githubusercontent.com/spdx/license-list-data/main/json/licenses.json" 2>/dev/null || echo "")
     if [[ -z "$SPDX_JSON" ]]; then
-      TABLE_ROWS+=("| License | ⚠️ | Could not fetch SPDX license list — skipping validation |")
+      TABLE_ROWS+=("| License | ⚠️ | Could not fetch SPDX license list - skipping validation |")
     else
       SPDX_VALID=$(echo "$SPDX_JSON" | jq --arg lid "$LICENSE_ID" '[.licenses[] | select(.isOsiApproved == true) | .licenseId] | any(. == $lid)')
       if [[ "$SPDX_VALID" == "true" ]]; then
-        TABLE_ROWS+=("| License | ✅ | \`$LICENSE_ID\` |")
+        LICENSE_NAME=$(echo "$SPDX_JSON" | jq -r --arg lid "$LICENSE_ID" '.licenses[] | select(.licenseId == $lid) | .name')
+        TABLE_ROWS+=("| License | ✅ | \`$LICENSE_ID\` - $LICENSE_NAME |")
       else
         TABLE_ROWS+=("| License | ❌ | \`$LICENSE_ID\` is not an [OSI-approved SPDX identifier](https://spdx.org/licenses/) |")
         failed=1
@@ -174,7 +175,7 @@ has_permission="false"
 
   # ── Access control ────────────────────────────────────────────────────────────
 
-  # Permission check — use base branch version to prevent self-granting via the PR
+  # Permission check - use base branch version to prevent self-granting via the PR
   IS_REPO_MAINTAINER=$(check_repo_maintainer "$PR_AUTHOR")
   if [[ "$IS_REPO_MAINTAINER" -eq 1 ]]; then
     TABLE_ROWS+=("| Permission | ✅ | |")
@@ -184,16 +185,16 @@ has_permission="false"
     BASE_AUTHOR=$(echo "$BASE_JSON" | jq -r '.author // ""')
     BASE_MAINTAINERS=$(echo "$BASE_JSON" | jq -r '[.maintainers[]?] | join(" ")')
     if [[ "$PR_AUTHOR" == "$BASE_AUTHOR" ]] || [[ " $BASE_MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
-      TABLE_ROWS+=("| Permission | ✅ | |")
+      TABLE_ROWS+=("| Permission | ✅ | You have permission to modify this plugin |")
       has_permission="true"
     else
       TABLE_ROWS+=("| Permission | ❌ | \`$PR_AUTHOR\` is not listed in \`author\` or \`maintainers\` |")
       failed=1
     fi
   else
-    # New plugin — PR author must list themselves so future PRs can be authorized
+    # New plugin - PR author must list themselves so future PRs can be authorized
     if [[ "$PR_AUTHOR" == "$AUTHOR" ]] || [[ " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
-      TABLE_ROWS+=("| Permission | ✅ | New plugin — \`$PR_AUTHOR\` listed in \`author\`/\`maintainers\` |")
+      TABLE_ROWS+=("| Permission | ✅ | New plugin - \`$PR_AUTHOR\` listed in \`author\`/\`maintainers\` |")
       has_permission="true"
     else
       TABLE_ROWS+=("| Permission | ❌ | Add \`\"author\": \"$PR_AUTHOR\"\` to plugin.json |")
@@ -207,7 +208,7 @@ has_permission="false"
   if [[ $(validate_semver "$VERSION") -eq 1 ]]; then
     TABLE_ROWS+=("| Version | ✅ | \`$VERSION\` |")
   else
-    TABLE_ROWS+=("| Version | ❌ | \`$VERSION\` is not valid semver — expected \`X.Y.Z\` |")
+    TABLE_ROWS+=("| Version | ❌ | \`$VERSION\` is not valid semver - expected \`X.Y.Z\` |")
     failed=1
   fi
 
@@ -230,12 +231,12 @@ has_permission="false"
   MAX_DA_VERSION=$(jq -r '.max_dispatcharr_version // ""' "$PLUGIN_JSON")
 
   if [[ -n "$MIN_DA_VERSION" ]] && [[ $(validate_dispatcharr_version "$MIN_DA_VERSION") -eq 0 ]]; then
-    TABLE_ROWS+=("| \`min_dispatcharr_version\` | ❌ | \`$MIN_DA_VERSION\` is not valid semver — expected \`X.Y.Z\` or \`vX.Y.Z\` |")
+    TABLE_ROWS+=("| \`min_dispatcharr_version\` | ❌ | \`$MIN_DA_VERSION\` is not valid semver - expected \`X.Y.Z\` or \`vX.Y.Z\` |")
     failed=1
   fi
 
   if [[ -n "$MAX_DA_VERSION" ]] && [[ $(validate_dispatcharr_version "$MAX_DA_VERSION") -eq 0 ]]; then
-    TABLE_ROWS+=("| \`max_dispatcharr_version\` | ❌ | \`$MAX_DA_VERSION\` is not valid semver — expected \`X.Y.Z\` or \`vX.Y.Z\` |")
+    TABLE_ROWS+=("| \`max_dispatcharr_version\` | ❌ | \`$MAX_DA_VERSION\` is not valid semver - expected \`X.Y.Z\` or \`vX.Y.Z\` |")
     failed=1
   fi
 
