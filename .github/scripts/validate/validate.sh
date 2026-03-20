@@ -159,9 +159,17 @@ has_permission="false"
       failed=1
     fi
   else
-    # New plugin — no base version to check against; any author may create it
-    echo "- ✅ Permission check passed (new plugin)"
-    has_permission="true"
+    # New plugin — no base version to check against.
+    # The PR author must include themselves in owner or maintainers so future
+    # PRs can be authorized. This is a correctable validation error, not a closure.
+    if [[ "$PR_AUTHOR" == "$OWNER" ]] || [[ " $MAINTAINERS " =~ " $PR_AUTHOR " ]]; then
+      echo "- ✅ New plugin: \`$PR_AUTHOR\` listed in \`owner\`/\`maintainers\`"
+      has_permission="true"
+    else
+      echo "- ❌ Your GitHub username (\`$PR_AUTHOR\`) must appear in \`owner\` or \`maintainers\` for new plugin submissions"
+      echo "  Add \`\"owner\": \"$PR_AUTHOR\"\` to your plugin.json"
+      failed=1
+    fi
   fi
 
   # Version format
