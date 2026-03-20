@@ -171,34 +171,6 @@ done
   fi
 } > pr_comment.txt
 
-# Minimize previous validation comments as outdated
-PREV_IDS=$(gh api graphql -f query='
-  query($owner: String!, $repo: String!, $pr: Int!) {
-    repository(owner: $owner, name: $repo) {
-      pullRequest(number: $pr) {
-        comments(first: 100) {
-          nodes { id isMinimized body author { login } }
-        }
-      }
-    }
-  }' \
-  -f owner="${GITHUB_REPOSITORY%%/*}" \
-  -f repo="${GITHUB_REPOSITORY##*/}" \
-  -F pr="$PR_NUMBER" \
-  --jq '.data.repository.pullRequest.comments.nodes[]
-        | select(.isMinimized == false)
-        | select(.author.login == "github-actions[bot]")
-        | .id')
-
-for NODE_ID in $PREV_IDS; do
-  gh api graphql -f query='
-    mutation($id: ID!) {
-      minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) {
-        minimizedComment { isMinimized }
-      }
-    }' -f id="$NODE_ID" > /dev/null
-done
-
 # Post PR comment
 gh pr comment "$PR_NUMBER" --body "$(cat pr_comment.txt)"
 
