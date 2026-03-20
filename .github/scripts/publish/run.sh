@@ -62,23 +62,23 @@ mkdir -p releases
 # --- Phases ---
 echo ""
 echo "=== Building ZIPs ==="
-bash "$SCRIPT_DIR/publish-build-zips.sh"
+bash "$SCRIPT_DIR/build-zips.sh"
 
 echo ""
 echo "=== Generating per-plugin READMEs ==="
-bash "$SCRIPT_DIR/publish-per-plugin-readmes.sh"
+bash "$SCRIPT_DIR/plugin-readmes.sh"
 
 echo ""
 echo "=== Cleaning up old releases ==="
-bash "$SCRIPT_DIR/publish-cleanup.sh"
+bash "$SCRIPT_DIR/cleanup.sh"
 
 echo ""
 echo "=== Generating manifests ==="
-bash "$SCRIPT_DIR/publish-generate-manifest.sh"
+bash "$SCRIPT_DIR/generate-manifest.sh"
 
 echo ""
 echo "=== Generating releases README ==="
-bash "$SCRIPT_DIR/publish-releases-readme.sh"
+bash "$SCRIPT_DIR/releases-readme.sh"
 
 # --- Commit and push ---
 echo ""

@@ -10,7 +10,12 @@ on:
     paths:
       - 'plugins/**'
       - '.github/workflows/publish-plugins.yml'
-      - '.github/scripts/publish-plugins.sh'
+      - '.github/scripts/publish/run.sh'
+      - '.github/scripts/publish/build-zips.sh'
+      - '.github/scripts/publish/plugin-readmes.sh'
+      - '.github/scripts/publish/cleanup.sh'
+      - '.github/scripts/publish/generate-manifest.sh'
+      - '.github/scripts/publish/releases-readme.sh'
   workflow_dispatch:
 
 concurrency:
@@ -27,15 +32,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Make publish script executable
-        run: chmod +x .github/scripts/publish-plugins.sh
+      - name: Make scripts executable
+        run: chmod +x .github/scripts/publish/*.sh
 
       - name: Publish plugins to releases branch
         id: publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: .github/scripts/publish-plugins.sh main 2>&1 | tee publish.log
+        run: .github/scripts/publish-plugins.sh ${{ github.ref_name }} 2>&1 | tee publish.log
 
       - name: Generate job summary
         if: always()

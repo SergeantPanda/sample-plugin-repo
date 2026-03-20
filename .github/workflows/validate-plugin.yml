@@ -1,7 +1,7 @@
 name: Validate Plugin
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 on:
@@ -11,129 +11,183 @@ on:
       - edited
       - synchronize
       - ready_for_review
-  #   paths:
-  #     - 'plugins/**'
-  #     - '.github/workflows/publish-plugins.yml'
-  # workflow_dispatch:
 
 jobs:
+  # --------------------------------------------------------------------------
+  # Job 1: Post a notice on draft PRs — no validation runs yet
+  # --------------------------------------------------------------------------
   draft-notice:
-    if: ${{ github.event.pull_request.draft == true }}
+    if: github.event.pull_request.draft == true
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Authenticate GH CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh auth status
-
       - name: Post draft notice
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENT="<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->"
-          COMMENT+=$'\n'"⚠️ This PR is currently a draft. Plugin validation will run once the PR is marked ready for review."
-          EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_DRAFT_NOTICE-->")) | .id')
-          if [ -n "$EXISTING_COMMENT_ID" ]; then
-            gh pr comment edit $EXISTING_COMMENT_ID --body "$COMMENT"
+          COMMENT="<\!--PLUGIN_VALIDATION_DRAFT_NOTICE-->"
+          COMMENT+=$'\n'"This PR is currently a draft. Plugin validation will run once the PR is marked ready for review."
+          EXISTING=$(gh pr view $PR_NUMBER --json comments \
+            --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<\!--PLUGIN_VALIDATION_DRAFT_NOTICE-->")) | .id')
+          if [ -n "$EXISTING" ]; then
+            gh api "repos/${{ github.repository }}/issues/comments/$EXISTING" -X PATCH -f body="$COMMENT"
           else
             gh pr comment $PR_NUMBER --body "$COMMENT"
           fi
 
-  validate-and-comment:
+  # --------------------------------------------------------------------------
+  # Job 2: Detect which plugins changed and build the matrix
+  # --------------------------------------------------------------------------
+  detect-changes:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      plugin_count: ${{ steps.detect.outputs.plugin_count }}
+      close_pr: ${{ steps.detect.outputs.close_pr }}
     steps:
-      - name: Fail if PR is draft
-        if: ${{ github.event.pull_request.draft == true }}
-        run: |
-          echo "❌ PR is a draft — validation cannot run on draft PRs"
-          exit 1
-
       - name: Checkout PR with full history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Fetch base branch fully
-        run: git fetch origin ${{ github.event.pull_request.base.ref }}:refs/remotes/origin/base
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      - name: Authenticate GH CLI
+      - name: Detect changed plugins
+        id: detect
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh auth status
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          chmod +x .github/scripts/validate/*.sh
+          .github/scripts/validate/detect-changes.sh \
+            "${{ github.actor }}" \
+            "${{ github.event.pull_request.base.ref }}"
 
-      - name: Make validation script executable
-        run: chmod +x .github/scripts/validate-plugin.sh
+  # --------------------------------------------------------------------------
+  # Job 3: Validate each plugin in parallel via matrix
+  # --------------------------------------------------------------------------
+  validate-plugin:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.close_pr == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    steps:
+      - name: Checkout PR with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Run plugin validation
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Validate ${{ matrix.plugin }}
         id: validate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          chmod +x .github/scripts/validate/*.sh
+          set +e
+          .github/scripts/validate/validate.sh \
+            "${{ matrix.plugin }}" \
+            "${{ github.actor }}" \
+            "${{ github.event.pull_request.base.ref }}" \
+            "${{ matrix.plugin }}.fragment.md"
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Upload report fragment
+        uses: actions/upload-artifact@v4
+        with:
+          name: fragment-${{ matrix.plugin }}
+          path: ${{ matrix.plugin }}.fragment.md
+          if-no-files-found: warn
+
+      - name: Fail step if validation failed
+        if: steps.validate.outputs.exit_code != '0'
+        run: exit 1
+
+  # --------------------------------------------------------------------------
+  # Job 4: Aggregate all fragments, post PR comment, set final status
+  # --------------------------------------------------------------------------
+  report:
+    needs: [detect-changes, validate-plugin]
+    if: always() && needs.detect-changes.result == 'success' && needs.detect-changes.outputs.close_pr == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Download all report fragments
+        uses: actions/download-artifact@v4
+        with:
+          pattern: fragment-*
+          path: fragments
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Aggregate and post comment
+        id: report
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           DISCORD_URL: ${{ vars.DISCORD_URL }}
         run: |
+          chmod +x .github/scripts/validate/*.sh
           set +e
-          .github/scripts/validate-plugin.sh \
+          .github/scripts/validate/report.sh \
             "${{ github.event.pull_request.number }}" \
             "${{ github.actor }}" \
-            "${{ github.event.pull_request.base.ref }}" \
-            > pr_comment.txt
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -eq 2 ]; then
-            echo "result=close" >> $GITHUB_OUTPUT
-          elif [ $EXIT_CODE -eq 0 ]; then
-            echo "result=success" >> $GITHUB_OUTPUT
-          else
-            echo "result=failure" >> $GITHUB_OUTPUT
-          fi
+            "${{ needs.detect-changes.outputs.plugin_count }}" \
+            "false" \
+            "fragments"
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
 
-      - name: Post or update PR comment
-        if: always() && steps.validate.outputs.result != 'close'
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ -f pr_comment.txt ]; then
-            COMMENT=$(cat pr_comment.txt)
-            # Check if a validation comment already exists
-            EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->")) | .id')
-            if [ -n "$EXISTING_COMMENT_ID" ]; then
-              # Update existing comment
-              gh api "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -X PATCH -f body="$COMMENT"
-            else
-              # Post new comment
-              gh pr comment $PR_NUMBER --body "$COMMENT"
-            fi
-          fi
-        continue-on-error: true
-
-      - name: Close unauthorized PR
-        if: always() && steps.validate.outputs.result == 'close'
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ -f pr_comment.txt ]; then
-            COMMENT=$(cat pr_comment.txt)
-            EXISTING_COMMENT_ID=$(gh pr view $PR_NUMBER --json comments --jq '.comments[] | select(.author.login=="github-actions[bot]") | select(.body | contains("<!--PLUGIN_VALIDATION_COMMENT-->")) | .id')
-            if [ -n "$EXISTING_COMMENT_ID" ]; then
-              gh api "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -X PATCH -f body="$COMMENT"
-            else
-              gh pr comment $PR_NUMBER --body "$COMMENT"
-            fi
-          fi
-          gh pr close $PR_NUMBER
-
-      - name: Fail workflow if validation failed
-        if: always() && steps.validate.outputs.result == 'failure'
+      - name: Fail workflow if any plugin failed
+        if: steps.report.outputs.exit_code != '0'
         run: |
           echo "::error::Plugin validation failed. See PR comment for details."
           exit 1
+
+  # --------------------------------------------------------------------------
+  # Job 5: Auto-close unauthorized PRs
+  # --------------------------------------------------------------------------
+  close-unauthorized:
+    needs: detect-changes
+    if: always() && needs.detect-changes.result == 'success' && needs.detect-changes.outputs.close_pr == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Post close comment and close PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DISCORD_URL: ${{ vars.DISCORD_URL }}
+        run: |
+          chmod +x .github/scripts/validate/*.sh
+          .github/scripts/validate/report.sh \
+            "${{ github.event.pull_request.number }}" \
+            "${{ github.actor }}" \
+            "${{ needs.detect-changes.outputs.plugin_count }}" \
+            "true" \
+            "/dev/null"

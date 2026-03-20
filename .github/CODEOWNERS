@@ -1,6 +1,0 @@
-# CODEOWNERS
-# These users are required reviewers for changes to the listed paths.
-# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-
-# Workflow and automation files require repo owner approval
-.github/ @sethwv
