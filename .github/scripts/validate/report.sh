@@ -129,6 +129,22 @@ done
       echo ""
     fi
 
+    if [[ -n "${CODEQL_RESULT:-}" && "${CODEQL_RESULT:-}" != "skipped" ]]; then
+      echo ""
+      echo "---"
+      echo ""
+      echo "## Code Quality"
+      echo ""
+      if [[ "$CODEQL_RESULT" == "success" ]]; then
+        echo "- ✅ **CodeQL security scan passed**"
+      else
+        OVERALL_FAILED=1
+        CODEQL_SCAN_URL="https://github.com/${GITHUB_REPOSITORY}/security/code-scanning?query=is%3Aopen+pr%3A${PR_NUMBER}"
+        echo "- ❌ **CodeQL security scan failed** — see [security findings](${CODEQL_SCAN_URL}) for details"
+      fi
+    fi
+
+    echo ""
     echo "---"
     echo ""
     if [[ $OVERALL_FAILED -eq 0 ]]; then
@@ -150,20 +166,6 @@ done
       echo "$TABLE_HEADER"
       echo "$TABLE_SEP"
       echo "$TABLE_ROWS"
-    fi
-
-    if [[ -n "${CODEQL_RESULT:-}" && "${CODEQL_RESULT:-}" != "skipped" ]]; then
-      echo ""
-      echo "---"
-      echo ""
-      echo "## Code Quality"
-      echo ""
-      if [[ "$CODEQL_RESULT" == "success" ]]; then
-        echo "- ✅ **CodeQL security scan passed**"
-      else
-        CODEQL_SCAN_URL="https://github.com/${GITHUB_REPOSITORY}/security/code-scanning?query=is%3Aopen+pr%3A${PR_NUMBER}"
-        echo "- ❌ **CodeQL security scan failed** — see [security findings](${CODEQL_SCAN_URL}) for details"
-      fi
     fi
   fi
 } > pr_comment.txt
