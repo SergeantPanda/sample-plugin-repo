@@ -44,9 +44,16 @@ for plugin_dir in plugins/*/; do
   done < <(ls -1 "releases/$plugin_name/${plugin_name}"-*.zip 2>/dev/null \
       | grep -v latest | sort -t- -k2 -V -r)
 
+  # Compute icon_url before building plugin_entry so it can be included in both manifests
+  icon_url=""
+  if [[ -f "plugins/$plugin_name/logo.png" ]]; then
+    icon_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${SOURCE_BRANCH}/plugins/${plugin_name}/logo.png"
+  fi
+
   plugin_entry=$(jq \
     --arg plugin_name "$plugin_name" \
     --arg latest_url "$latest_url" \
+    --arg icon_url "$icon_url" \
     --argjson versioned_zips "$versioned_zips" \
     --argjson latest_metadata "$latest_metadata" \
     'with_entries(select(.key | IN(
@@ -56,7 +63,8 @@ for plugin_dir in plugins/*/; do
       slug: $plugin_name,
       latest_url: $latest_url,
       versions: $versioned_zips
-    } + (
+    } + (if $icon_url != "" then {icon_url: $icon_url} else {} end)
+      + (
       if ($latest_metadata | length > 0) then {
         last_updated: $latest_metadata.last_updated,
         latest: ($latest_metadata + {
@@ -81,11 +89,6 @@ for plugin_dir in plugins/*/; do
     desc_trimmed="${desc_raw:0:197}..."
   else
     desc_trimmed="$desc_raw"
-  fi
-
-  icon_url=""
-  if [[ -f "plugins/$plugin_name/logo.png" ]]; then
-    icon_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${SOURCE_BRANCH}/plugins/${plugin_name}/logo.png"
   fi
 
   plugin_manifest_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${RELEASES_BRANCH}/metadata/${plugin_name}/manifest.json"
