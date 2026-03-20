@@ -10,6 +10,7 @@ set -e
 : "${SOURCE_BRANCH:?}" "${RELEASES_BRANCH:?}" "${GITHUB_REPOSITORY:?}"
 
 plugin_entries=()
+root_entries=()
 
 for plugin_dir in plugins/*/; do
   plugin_file="$plugin_dir/plugin.json"
@@ -50,7 +51,7 @@ for plugin_dir in plugins/*/; do
     --argjson latest_metadata "$latest_metadata" \
     'with_entries(select(.key | IN(
       "name","version","description","owner","maintainers",
-      "deprecated","unlisted","min_dispatcharr_version","repo_url","discord_thread"
+      "deprecated","unlisted","min_dispatcharr_version","max_dispatcharr_version","repo_url","discord_thread"
     ))) + {
       slug: $plugin_name,
       latest_url: $latest_url,
@@ -73,13 +74,50 @@ for plugin_dir in plugins/*/; do
 
   echo "$plugin_entry" | jq '.' > "metadata/$plugin_name/manifest.json"
   plugin_entries+=("$plugin_entry")
+
+  # Compact root manifest entry
+  desc_raw=$(jq -r '.description // ""' "$plugin_file")
+  if [[ ${#desc_raw} -gt 200 ]]; then
+    desc_trimmed="${desc_raw:0:197}..."
+  else
+    desc_trimmed="$desc_raw"
+  fi
+
+  icon_url=""
+  if [[ -f "plugins/$plugin_name/logo.png" ]]; then
+    icon_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${SOURCE_BRANCH}/plugins/${plugin_name}/logo.png"
+  fi
+
+  plugin_manifest_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${RELEASES_BRANCH}/metadata/${plugin_name}/manifest.json"
+
+  root_entry=$(jq -n \
+    --argjson latest_metadata "$latest_metadata" \
+    --arg name "$(jq -r '.name // ""' "$plugin_file")" \
+    --arg description "$desc_trimmed" \
+    --arg icon_url "$icon_url" \
+    --arg manifest_url "$plugin_manifest_url" \
+    --arg author "$(jq -r '.owner // ""' "$plugin_file")" \
+    --arg latest_url "$latest_url" \
+    '{
+      name: $name,
+      description: $description,
+      icon_url: (if $icon_url != "" then $icon_url else null end),
+      manifest_url: $manifest_url,
+      author: $author,
+      latest_version: ($latest_metadata.version // null),
+      latest_md5: ($latest_metadata.checksum_md5 // null),
+      latest_url: $latest_url,
+      min_dispatcharr_version: ($latest_metadata.min_dispatcharr_version // null),
+      max_dispatcharr_version: ($latest_metadata.max_dispatcharr_version // null)
+    } | with_entries(select(.value != null))')
+  root_entries+=("$root_entry")
 done
 
 {
   echo '{'
   echo '  "plugins": ['
   first=true
-  for entry in "${plugin_entries[@]}"; do
+  for entry in "${root_entries[@]}"; do
     if [[ "$first" != true ]]; then echo ","; fi
     first=false
     echo "$entry" | sed 's/^/    /'
@@ -89,4 +127,4 @@ done
   echo '}'
 } | jq '.' > manifest.json
 
-echo "Generated manifest.json with ${#plugin_entries[@]} plugin(s)."
+echo "Generated manifest.json with ${#root_entries[@]} plugin(s)."

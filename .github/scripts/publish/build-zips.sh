@@ -43,6 +43,7 @@ for plugin_dir in plugins/*/; do
   checksum_sha256=$(shasum -a 256 "$zip_path" | awk '{print $1}')
 
   min_da_version=$(jq -r '.min_dispatcharr_version // ""' "$plugin_dir/plugin.json")
+  max_da_version=$(jq -r '.max_dispatcharr_version // ""' "$plugin_dir/plugin.json")
 
   jq -n \
     --arg version "$version" \
@@ -53,6 +54,7 @@ for plugin_dir in plugins/*/; do
     --arg checksum_md5 "$checksum_md5" \
     --arg checksum_sha256 "$checksum_sha256" \
     --arg min_da_version "$min_da_version" \
+    --arg max_da_version "$max_da_version" \
     '{
       version: $version,
       commit_sha: $commit_sha,
@@ -61,7 +63,8 @@ for plugin_dir in plugins/*/; do
       last_updated: $last_updated,
       checksum_md5: $checksum_md5,
       checksum_sha256: $checksum_sha256
-    } + (if $min_da_version != "" then {min_dispatcharr_version: $min_da_version} else {} end)' \
+    } + (if $min_da_version != "" then {min_dispatcharr_version: $min_da_version} else {} end)
+      + (if $max_da_version != "" then {max_dispatcharr_version: $max_da_version} else {} end)' \
     > "$metadata_path"
 
   cp "$zip_path" "releases/$plugin_name/${plugin_name}-latest.zip"
