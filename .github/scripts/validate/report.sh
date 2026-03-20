@@ -74,11 +74,10 @@ done
   echo ""
 
   if [[ "${CLOSE_REASON:-}" == "no-valid-plugins" ]]; then
-    echo "---"
     echo ""
-    echo "## ⚠️ Invalid Plugin Folder Name"
+    echo "## Invalid Plugin Folder Name"
     echo ""
-    echo "Your PR modifies plugin folder(s) whose names do not meet the naming requirements. Plugin folder names must be **lowercase letters, numbers, and hyphens only** (e.g. \`my-plugin\`). Spaces and other special characters are not allowed."
+    echo "⚠️ Your PR modifies plugin folder(s) whose names do not meet the naming requirements. Plugin folder names must be **lowercase letters, numbers, and hyphens only** (e.g. \`my-plugin\`). Spaces and other special characters are not allowed."
     echo ""
     echo "Please rename the folder(s) and update your PR."
     if [[ -n "${DISCORD_URL:-}" ]]; then
@@ -86,7 +85,6 @@ done
       echo "For help: [Dispatcharr Discord]($DISCORD_URL)"
     fi
   elif [[ "$CLOSE_PR" == "true" ]]; then
-    echo "---"
     echo ""
     echo "## PR Closed: Unauthorized"
     echo ""
@@ -110,11 +108,10 @@ done
 
     if [[ -n "${OUTSIDE_FILES:-}" ]]; then
       OVERALL_FAILED=1
-      echo "---"
       echo ""
-      echo "## ⚠️ Unauthorized File Modification"
+      echo "## Unauthorized File Modification"
       echo ""
-      echo "This PR modifies files outside of \`plugins/\`, which requires write access to the repository. These changes will block merging."
+      echo "⚠️ This PR modifies files outside of \`plugins/\`, which requires write access to the repository. These changes will block merging."
       echo ""
       echo "**Modified files:**"
       echo "\`\`\`"
@@ -129,19 +126,13 @@ done
       echo ""
     fi
 
-    if [[ -n "${CODEQL_RESULT:-}" && "${CODEQL_RESULT:-}" != "skipped" ]]; then
-      echo ""
-      echo "---"
+    if [[ -n "${CODEQL_RESULT:-}" && "${CODEQL_RESULT:-}" != "skipped" && "${CODEQL_RESULT:-}" != "success" ]]; then
       echo ""
       echo "## Code Quality"
       echo ""
-      if [[ "$CODEQL_RESULT" == "success" ]]; then
-        echo "- ✅ **CodeQL security scan passed**"
-      else
-        OVERALL_FAILED=1
-        CODEQL_SCAN_URL="https://github.com/${GITHUB_REPOSITORY}/security/code-scanning?query=is%3Aopen+pr%3A${PR_NUMBER}"
-        echo "- ❌ **CodeQL security scan failed** — see [security findings](${CODEQL_SCAN_URL}) for details"
-      fi
+      OVERALL_FAILED=1
+      CODEQL_SCAN_URL="https://github.com/${GITHUB_REPOSITORY}/security/code-scanning?query=is%3Aopen+pr%3A${PR_NUMBER}"
+      echo "❌ **CodeQL security scan failed** - see [security findings](${CODEQL_SCAN_URL}) for details"
     fi
 
     echo ""
