@@ -138,7 +138,7 @@ jobs:
         id: analyze
         uses: github/codeql-action/analyze@v4
         with:
-          category: /language:python
+          category: /language:python/pr-${{ github.event.pull_request.number }}
           output: sarif-results
           upload: false
         continue-on-error: true
@@ -150,7 +150,7 @@ jobs:
           sarif_file: sarif-results
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           sha: ${{ steps.merge.outputs.sha }}
-          category: /language:python
+          category: /language:python/pr-${{ github.event.pull_request.number }}
         continue-on-error: true
 
       - name: Set CodeQL status output
