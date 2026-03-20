@@ -75,8 +75,9 @@ failed=0
 is_new="false"
 has_permission="false"
 
+RELEASES_README_URL="https://github.com/${GITHUB_REPOSITORY}/blob/releases/plugins/${PLUGIN_NAME}/README.md"
 {
-  echo "### Plugin: \`$PLUGIN_NAME\`"
+  echo "### Plugin: [\`$PLUGIN_NAME\`]($RELEASES_README_URL)"
   echo ""
 
   # Folder name format
@@ -261,6 +262,18 @@ has_permission="false"
     (.repo_url // ""),
     (.discord_thread // "")
   ] | @tsv' "$PLUGIN_JSON")-->"
+
+  # Append plugin README content if present
+  if [[ -f "$README" ]]; then
+    echo ""
+    echo "---"
+    echo ""
+    echo "<details><summary>📄 Plugin README</summary>"
+    echo ""
+    cat "$README"
+    echo ""
+    echo "</details>"
+  fi
 
 } > "$OUTPUT_FILE"
 
