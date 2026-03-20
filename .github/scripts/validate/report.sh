@@ -162,14 +162,14 @@ done
       echo "Some checks failed. Please review the errors above and update your PR."
     fi
 
-    if [[ -n "$PLUGIN_LINKS" ]]; then
-      echo ""
-      echo "---"
-      echo ""
-      echo "## Plugin Links"
-      echo ""
-      echo "$PLUGIN_LINKS"
-    fi
+    # if [[ -n "$PLUGIN_LINKS" ]]; then
+    #   echo ""
+    #   echo "---"
+    #   echo ""
+    #   echo "## Plugin Links"
+    #   echo ""
+    #   echo "$PLUGIN_LINKS"
+    # fi
 
     # if [[ -n "$TABLE_ROWS" ]]; then
     #   echo ""
