@@ -136,7 +136,6 @@ MATRIX_JSON=$(echo "$PLUGIN_LIST" | jq -Rnc '[inputs]')
 
 echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
 echo "plugin_count=$PLUGIN_COUNT" >> "$GITHUB_OUTPUT"
-echo "has_new_plugin=$HAS_NEW_PLUGIN" >> "$GITHUB_OUTPUT"
 echo "close_pr=$CLOSE_PR" >> "$GITHUB_OUTPUT"
 if [[ "$CLOSE_PR" == "true" ]]; then
   echo "close_reason=unauthorized" >> "$GITHUB_OUTPUT"

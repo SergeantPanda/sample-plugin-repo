@@ -55,7 +55,6 @@ jobs:
       close_pr: ${{ steps.detect.outputs.close_pr }}
       close_reason: ${{ steps.detect.outputs.close_reason }}
       outside_files: ${{ steps.detect.outputs.outside_files }}
-      has_new_plugin: ${{ steps.detect.outputs.has_new_plugin }}
     steps:
       - name: Checkout base branch scripts (trusted)
         uses: actions/checkout@v4
@@ -280,17 +279,6 @@ jobs:
         run: |
           echo "::error::Plugin validation failed. See PR comment for details."
           exit 1
-
-      - name: Approve PR if all checks passed and no new plugins
-        if: |
-          steps.report.outputs.exit_code == '0' &&
-          needs.detect-changes.outputs.has_new_plugin == '0'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr review ${{ github.event.pull_request.number }} \
-            --approve \
-            --body "All validation checks passed. Auto-approved."
 
   # --------------------------------------------------------------------------
   # Job 6: Auto-close unauthorized PRs
